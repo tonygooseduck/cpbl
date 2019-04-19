@@ -71,10 +71,10 @@
                     event.preventDefault();
                     socket.emit('draft', pick.value, function(data) {
                         if(data) {
-                            alert('Player drafted successfully');
+                            alert(data);
                         }
                         else {
-                            alert('player draft fail');
+                            alert('unknown error');
                         }
                     });
                 });

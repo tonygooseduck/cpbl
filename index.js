@@ -22,13 +22,15 @@ db.connect((err) => {
         return;
     }
     console.log('connected as id: ' + db.threadId);
-    let sockets = {};
-    let counter = 0;
-    let nicknames = [];
-    let playerList;
-    let draftedList = [];
     
     let rooms = {};
+    // class playerList {
+    //     constructor () {
+    //         this.data = getPlayerList('player', function(result) {
+    //             return result;
+    //         });
+    //     }
+    // }
     
     const mock = io.of('mock-draft');
     mock.on('connection', function(socket) {
@@ -36,14 +38,15 @@ db.connect((err) => {
         //let draftedList = [];
         //let draftPlayers = ["Faye", "David", "Jim"];
         //let order;
-        let rand;
-        let count;
+        //let rand;
+        //let count;
+        let a;
         console.log(`${socket.id} connected`);
         getPlayerData('player', function(result) {
             socket.emit('output', result);
         });
         getPlayerList('player', function(result) {
-            playerList = result;
+            a = JSON.stringify(result);
         });
         socket.on('joinroom', function(data) {
             socket.join(data, () => {
@@ -53,11 +56,11 @@ db.connect((err) => {
                 // create room in rooms
                 rooms[data] = {};
                 rooms[socket.mock].draftPlayers = ["Faye", "David", "Jim"];
-                rooms[socket.mock].playerList = playerList;
+                rooms[socket.mock].playerList = JSON.parse(a);
                 rooms[socket.mock].draftedList = [];
                 rooms[socket.mock].temp = [];
-                //console.log(rooms);
-                //console.log(rooms[socket.mock]);
+                rooms[socket.mock].turn;
+                console.log(Object.keys(rooms));
             });
             
         });
@@ -76,117 +79,120 @@ db.connect((err) => {
                 rooms[socket.mock].playerList.splice(rand, 1);
                 rooms[socket.mock].count--;
             }
-            console.log(rooms);
+            //console.log(rooms);
             if(rooms[socket.mock].order == 0) {
                 socket.emit('messages', 'Your turn to pick!');
             } else if(rooms[socket.mock].order == 1) {
-                socket.emit('messages', `${draftPlayers[0]} picked ${temp[0]}`);
-                draftedList.push(temp[0]);
-                temp.splice(0, 1);
+                socket.emit('messages', `${rooms[socket.mock].draftPlayers[0]} picked ${rooms[socket.mock].temp[0]}`);
+                rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[0]);
+                rooms[socket.mock].temp.splice(0, 1);
             } else if(rooms[socket.mock].order == 2) {
-                socket.emit('messages', `${draftPlayers[0]} picked ${temp[0]}`);
-                draftedList.push(temp[0]);
-                socket.emit('messages', `${draftPlayers[1]} picked ${temp[1]}`);
-                draftedList.push(temp[1]);
-                temp.splice(0, 1);
-                temp.splice(0, 1);
+                socket.emit('messages', `${rooms[socket.mock].draftPlayers[0]} picked ${rooms[socket.mock].temp[0]}`);
+                rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[0]);
+                socket.emit('messages', `${rooms[socket.mock].draftPlayers[1]} picked ${rooms[socket.mock].temp[1]}`);
+                rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[1]);
+                rooms[socket.mock].temp.splice(0, 1);
+                rooms[socket.mock].temp.splice(0, 1);
             } else {
-                socket.emit('messages', `${draftPlayers[0]} picked ${temp[0]}`);
-                draftedList.push(temp[0]);
-                socket.emit('messages', `${draftPlayers[1]} picked ${temp[1]}`);
-                draftedList.push(temp[1]);
-                socket.emit('messages', `${draftPlayers[2]} picked ${temp[2]}`);
-                draftedList.push(temp[2]);
-                temp.splice(0, 1);
-                temp.splice(0, 1);
-                temp.splice(0, 1);
+                socket.emit('messages', `${rooms[socket.mock].draftPlayers[0]} picked ${rooms[socket.mock].temp[0]}`);
+                rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[0]);
+                socket.emit('messages', `${rooms[socket.mock].draftPlayers[1]} picked ${rooms[socket.mock].temp[1]}`);
+                rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[1]);
+                socket.emit('messages', `${rooms[socket.mock].draftPlayers[2]} picked ${rooms[socket.mock].temp[2]}`);
+                rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[2]);
+                rooms[socket.mock].temp.splice(0, 1);
+                rooms[socket.mock].temp.splice(0, 1);
+                rooms[socket.mock].temp.splice(0, 1);
             }
         });
         socket.on('draft', function(data, callback) {
-            let turn = draftedList.length % draftPlayers.length;
-            if(draftedList.indexOf(data) != -1) {
+            rooms[socket.mock].turn = rooms[socket.mock].draftedList.length % rooms[socket.mock].draftPlayers.length;
+            if(rooms[socket.mock].draftedList.indexOf(data) != -1) {
                 callback(false);
-            } else if(playerList.indexOf(data) == -1 && temp.indexOf(data) == -1) {
+            } else if(rooms[socket.mock].playerList.indexOf(data) == -1 && rooms[socket.mock].temp.indexOf(data) == -1) {
+                console.log(rooms[socket.mock].playerList.indexOf(data));
+                console.log(rooms[socket.mock].temp.indexOf(data));
                 callback(false);
-            } else if(draftPlayers.indexOf("You") !== turn) {
+
+            } else if(rooms[socket.mock].draftPlayers.indexOf("You") !== rooms[socket.mock].turn) {
                 callback(false);
             } else {
                 callback(true);
-                draftedList.push(data);
-                if(temp.indexOf(data) != -1) {
-                    temp.splice(temp.indexOf(data), 1);
+                rooms[socket.mock].draftedList.push(data);
+                if(rooms[socket.mock].temp.indexOf(data) != -1) {
+                    rooms[socket.mock].temp.splice(rooms[socket.mock].temp.indexOf(data), 1);
                 }
-                console.log(draftedList);
+                console.log(rooms[socket.mock].draftedList);
                 socket.emit('messages', `You drafted ${data}`);
-                playerList.splice(playerList.indexOf(data), 1);
-                if(temp.length < 3) {
+                rooms[socket.mock].playerList.splice(rooms[socket.mock].playerList.indexOf(data), 1);
+                if(rooms[socket.mock].temp.length < 3) {
                     for(let i = 0; i < 4; i++) {
-                        rand = Math.floor(Math.random() * count);
-                        temp.push(playerList[rand]);
-                        playerList.splice(rand, 1);
-                        count--;
+                        rand = Math.floor(Math.random() * rooms[socket.mock].count);
+                        rooms[socket.mock].temp.push(rooms[socket.mock].playerList[rand]);
+                        rooms[socket.mock].playerList.splice(rand, 1);
+                        rooms[socket.mock].count--;
                     }
                 }
-                if(order == 0) {
-                    socket.emit('messages', `${draftPlayers[1]} picked ${temp[0]}`);
-                    draftedList.push(temp[0]);
-                    socket.emit('messages', `${draftPlayers[2]} picked ${temp[1]}`);
-                    draftedList.push(temp[1]);
-                    socket.emit('messages', `${draftPlayers[3]} picked ${temp[2]}`);
-                    draftedList.push(temp[2]);
-                    temp.splice(0, 1);
-                    temp.splice(0, 1);
-                    temp.splice(0, 1);
-                    if(draftedList.length >= 4 * 5) {
+                if(rooms[socket.mock].order == 0) {
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[1]} picked ${rooms[socket.mock].temp[0]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[0]);
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[2]} picked ${rooms[socket.mock].temp[1]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[1]);
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[3]} picked ${rooms[socket.mock].temp[2]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[2]);
+                    rooms[socket.mock].temp.splice(0, 1);
+                    rooms[socket.mock].temp.splice(0, 1);
+                    rooms[socket.mock].temp.splice(0, 1);
+                    if(rooms[socket.mock].draftedList.length >= 4 * 5) {
                         socket.emit('end', 'end of draft');
                         return;
                     }
-                } else if(order == 1) {
-                    socket.emit('messages', `${draftPlayers[2]} picked ${temp[0]}`);
-                    draftedList.push(temp[0]);
-                    socket.emit('messages', `${draftPlayers[3]} picked ${temp[1]}`);
-                    draftedList.push(temp[1]);
-                    if(draftedList.length >= 4 * 5) {
+                } else if(rooms[socket.mock].order == 1) {
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[2]} picked ${rooms[socket.mock].temp[0]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[0]);
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[3]} picked ${rooms[socket.mock].temp[1]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[1]);
+                    if(rooms[socket.mock].draftedList.length >= 4 * 5) {
                         socket.emit('end', 'end of draft');
                         return;
                     }
-                    socket.emit('messages', `${draftPlayers[0]} picked ${temp[2]}`);
-                    draftedList.push(temp[2]);
-                    temp.splice(0, 1);
-                    temp.splice(0, 1);
-                    temp.splice(0, 1);
-                } else if(order == 2) {
-                    socket.emit('messages', `${draftPlayers[3]} picked ${temp[0]}`);
-                    draftedList.push(temp[0]);
-                    if(draftedList.length >= 4 * 5) {
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[0]} picked ${rooms[socket.mock].temp[2]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[2]);
+                    rooms[socket.mock].temp.splice(0, 1);
+                    rooms[socket.mock].temp.splice(0, 1);
+                    rooms[socket.mock].temp.splice(0, 1);
+                } else if(rooms[socket.mock].order == 2) {
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[3]} picked ${rooms[socket.mock].temp[0]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[0]);
+                    if(rooms[socket.mock].draftedList.length >= 4 * 5) {
                         socket.emit('end', 'end of draft');
                         return;
                     }
-                    socket.emit('messages', `${draftPlayers[0]} picked ${temp[1]}`);
-                    draftedList.push(temp[1]);
-                    socket.emit('messages', `${draftPlayers[1]} picked ${temp[2]}`);
-                    draftedList.push(temp[2]);
-                    temp.splice(0, 1);
-                    temp.splice(0, 1);
-                    temp.splice(0, 1);
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[0]} picked ${rooms[socket.mock].temp[1]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[1]);
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[1]} picked ${rooms[socket.mock].temp[2]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[2]);
+                    rooms[socket.mock].temp.splice(0, 1);
+                    rooms[socket.mock].temp.splice(0, 1);
+                    rooms[socket.mock].temp.splice(0, 1);
                 } else {
-                    if(draftedList.length >= 4 * 5) {
+                    if(rooms[socket.mock].draftedList.length >= 4 * 5) {
                         socket.emit('end', 'end of draft');
                         return;
                     }
-                    socket.emit('messages', `${draftPlayers[0]} picked ${temp[0]}`);
-                    draftedList.push(temp[0]);
-                    socket.emit('messages', `${draftPlayers[1]} picked ${temp[1]}`);
-                    draftedList.push(temp[1]);
-                    socket.emit('messages', `${draftPlayers[2]} picked ${temp[2]}`);
-                    draftedList.push(temp[2]);
-                    temp.splice(0, 1);
-                    temp.splice(0, 1);
-                    temp.splice(0, 1);
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[0]} picked ${rooms[socket.mock].temp[0]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[0]);
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[1]} picked ${rooms[socket.mock].temp[1]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[1]);
+                    socket.emit('messages', `${rooms[socket.mock].draftPlayers[2]} picked ${rooms[socket.mock].temp[2]}`);
+                    rooms[socket.mock].draftedList.push(rooms[socket.mock].temp[2]);
+                    rooms[socket.mock].temp.splice(0, 1);
+                    rooms[socket.mock].temp.splice(0, 1);
+                    rooms[socket.mock].temp.splice(0, 1);
                 }
 
             }
-
+            console.log(rooms);
         });
     });
 
