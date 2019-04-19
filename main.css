@@ -1,0 +1,12 @@
+.right {
+    display:flexbox;
+}
+
+.players {
+    text-align: right
+}
+
+.wrapper {
+    display: flexbox;
+    flex-direction: row;
+}

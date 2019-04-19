@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>cpbl mock draft</title>
+        <link rel="stylesheet" type="text/css" href="main.css" media="all" />
+        <style type="text/css">
+            #messages { padding: 0px; list-style-type: none;}
+            #messages li { padding: 2px 0px; border-bottom: 1px solid #ccc; }
+            
+        </style>
+    </head>
+    <body>
+        <div id="wrapper">
+            <button id="start", type="submit">Start draft</button>
+            <form id="room-form">
+                <label for="room">Room:</label>
+                <input type="text" id="room" />
+                <input type="submit" />
+            </form>
+            <form id="draft-form">
+                <label for="draft">Draft:</label>
+                <input type="text" id="draft" />
+                <input type="submit" />
+            </form>
+            <section>
+                <ul id="messages"></ul>
+            </section>
+            <table id="players">
+            </table>
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            let socket = io('/mock-draft');
+            socket.on('connect', function(){
+                socket.on('output', function(data) {
+                    let html = '<tr><th>Name</th><th>Team</th><th>RBI</th><th>H</th><th>OBP</th><th>AVG</th><th>ERA</th><th>WHIP</th><th>W</th></tr>';
+                    for(let i = 0; i < data.length; i++) {
+                        if(i)
+                        html += '<tr>';
+                        html += '<th>' + data[i].name + '</th>';
+                        html += '<th>' + data[i].team + '</th>';
+                        html += '<th>' + data[i].RBI + '</th>';
+                        html += '<th>' + data[i].H + '</th>';
+                        html += '<th>' + data[i].OBP + '</th>';
+                        html += '<th>' + data[i].AVG + '</th>';
+                        html += '<th>' + data[i].ERA + '</th>';
+                        html += '<th>' + data[i].WHIP + '</th>';
+                        html += '<th>' + data[i].W + '</th>';
+                        html += '</tr>';
+                    }
+                    document.querySelector('#players').innerHTML = html;
+                });
+                socket.on('messages', function(data) {
+                    document.querySelector('#messages').innerHTML += `<li>${data}</li>`;
+                });
+                socket.on('end', function(data) {
+                    draftForm.style.display = 'none';
+                });
+                const roomForm = document.querySelector('#room-form');
+                let room = document.querySelector('#room');
+                roomForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    socket.emit('joinroom', room.value);
+                });
+
+                const draftForm = document.querySelector('#draft-form');
+                let pick = document.querySelector('#draft');
+                draftForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    socket.emit('draft', pick.value, function(data) {
+                        if(data) {
+                            alert('Player drafted successfully');
+                        }
+                        else {
+                            alert('player draft fail');
+                        }
+                    });
+                });
+                const start = document.querySelector('#start');
+                start.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    socket.emit('start', 'nothing', function(data) {
+                        if(data) {
+                            start.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>cpbl draft</title>
+        <link rel="stylesheet" type="text/css" href="main.css" media="all" />
+        <style type="text/css">
+            #messages { padding: 0px; list-style-type: none;}
+            #messages li { padding: 2px 0px; border-bottom: 1px solid #ccc; }
+            #draft-form {display: none};
+            #nicknames { width: 300px; float: right; }
+        </style>
+    </head>
+    <body>
+        <form id="set-nickname">
+            <label for="nickname">Nickname:</label>
+            <input type="text" id="nickname" />
+            <input type="submit" />
+        </form>
+        <form id="draft-form">
+            <label for="draft">Draft:</label>
+            <input type="text" id="draft" />
+            <input type="submit" />
+        </form>
+        <section>
+            <ul id="nicknames"></ul>
+        </section>
+        <div id="right">
+            <section>
+                <ul id="messages"></ul>
+            </section>
+            <section>
+                <ul id="players"></ul>
+            </section>
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            let socket = io('/real-draft');
+            socket.on('connect', function(){
+            jQuery(function ($) {
+                let nickname = $('#nickname');
+                let setNicknameForm = $('#set-nickname');
+                let nicknamesList = $('nicknames ul');
+                let draftPlayer = $('#draft');
+                let draftForm = $('#draft-form');
+                let playersList = $('#players ul');
+
+                setNicknameForm.submit(function(event) {
+                    event.preventDefault();
+                    socket.emit('nickname', nickname.val(), function(data) {
+                        if(data) {
+                            setNicknameForm.hide();
+                        } else {
+                            setNicknameForm.prepend('<p>nickname already taken.</p>');
+                        }
+                    });
+                });
+                draftForm.submit(function(event) {
+                    event.preventDefault();
+                    socket.emit('draft', draftPlayer.val(), function(data) {
+                        if(data) {
+                            alert('Player drafted successfully');
+                            //draftForm.hide();
+                        }
+                        else {
+                            alert('player draft fail');
+                        }
+                    });
+                });
+                socket.on('disconnect', function() {
+                    $('#messages').append('<li>Disconnected</li>');
+                });
+                socket.on('output', function(data) {
+                    let html = '';
+                    for(let i = 0; i < data.length; i++) {
+                        html += '<li>' + data[i].name + '</li>';
+                    }
+                    $('#players').empty().append(html);
+                    draftForm.show();
+                });
+
+                socket.on('nicknames', function(data) {
+                    let html = '';
+                    for(let i = 0; i < data.length; i++) {
+                        html += '<li>' + data[i] + '</li>';
+                    }
+                    $('#nicknames').empty().append(html);
+                    //$('#nicknames').empty().append($('<li></li>').text(html));
+                });
+                socket.on('message', function(message) {
+                    $('#messages').append($('<li></li>').text(message));
+                });
+                socket.on('end', function(message) {
+                    $('#messages').append($('<li></li>').text(message));
+                    draftForm.hide();
+                })
+            });
+        });
+        </script>
+    </body>
+</html>
