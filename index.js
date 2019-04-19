@@ -48,21 +48,25 @@ db.connect((err) => {
         getPlayerList('player', function(result) {
             a = JSON.stringify(result);
         });
-        socket.on('joinroom', function(data) {
-            socket.join(data, () => {
-                // get the room name and save it in socket.mock
-                socket.mock = socket.rooms[data];
-                // console.log(Object.keys(socket.rooms));
-                // create room in rooms
-                rooms[data] = {};
-                rooms[socket.mock].draftPlayers = ["Faye", "David", "Jim"];
-                rooms[socket.mock].playerList = JSON.parse(a);
-                rooms[socket.mock].draftedList = [];
-                rooms[socket.mock].temp = [];
-                rooms[socket.mock].turn;
-                console.log(Object.keys(rooms));
-            });
-            
+        socket.on('joinroom', function(data, callback) {
+            if(Object.keys(rooms).indexOf(data) != -1) {
+                callback(true);
+            } else {
+                callback(false);
+                socket.join(data, () => {
+                    // get the room name and save it in socket.mock
+                    socket.mock = socket.rooms[data];
+                    // console.log(Object.keys(socket.rooms));
+                    // create room in rooms
+                    rooms[data] = {};
+                    rooms[socket.mock].draftPlayers = ["AlphaGo", "AlphaStar", "OpenAI"];
+                    rooms[socket.mock].playerList = JSON.parse(a);
+                    rooms[socket.mock].draftedList = [];
+                    rooms[socket.mock].temp = [];
+                    rooms[socket.mock].turn;
+                    console.log(Object.keys(rooms));
+                    });
+            }  
         });
         socket.on('start', function(data, callback) {
 
@@ -196,10 +200,18 @@ db.connect((err) => {
         });
     });
 
+    let leagues = {};
+    leagueName: {
+        Participants:,
+        PlayerList:
+        DraftedList: {
+            Participant: Player
+        }
+    }
     const real = io.of('real-draft');
     real.on('connection', function(socket) {
-        socket.counter = counter++;
-        sockets[socket.counter] = socket;
+        //socket.counter = counter++;
+        //sockets[socket.counter] = socket;
         //console.log(`user ${socket.counter} connected`);
         console.log(`${socket.id} connected`);
 
@@ -208,12 +220,12 @@ db.connect((err) => {
             socket.emit('output', result);
         });
         getPlayerList('player', function(result) {
-            playerList = result;
+            playerList = JSON.stringify(result);
         });
 
         socket.on('disconnect', function() {
-            delete sockets[socket.counter];
-            console.log(`user ${socket.counter} disconnected`);
+            //delete sockets[socket.counter];
+            //console.log(`user ${socket.counter} disconnected`);
             // let i = players.indexOf(socket);
             // players.splice(i, 1);
         });

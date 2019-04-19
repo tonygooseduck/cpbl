@@ -62,7 +62,13 @@
                 let room = document.querySelector('#room');
                 roomForm.addEventListener('submit', function(event) {
                     event.preventDefault();
-                    socket.emit('joinroom', room.value);
+                    socket.emit('joinroom', room.value, function(data) {
+                        if(data) {
+                            alert('room already existed');
+                        } else {
+                            roomForm.style.display = 'none';
+                        }
+                    });
                 });
 
                 const draftForm = document.querySelector('#draft-form');

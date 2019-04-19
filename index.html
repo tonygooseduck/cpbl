@@ -22,6 +22,12 @@
             <input type="text" id="draft" />
             <input type="submit" />
         </form>
+        <button id="create", type="submit">Create League</button>
+        <form id="join-form">
+            <label for="join">Join:</label>
+            <input type="text" id="join" />
+            <input type="submit" />
+        </form>
         <section>
             <ul id="nicknames"></ul>
         </section>
@@ -44,6 +50,8 @@
                 let nicknamesList = $('nicknames ul');
                 let draftPlayer = $('#draft');
                 let draftForm = $('#draft-form');
+                let joinLeague = $('#join');
+                let joinForm = $('#join-form');
                 let playersList = $('#players ul');
 
                 setNicknameForm.submit(function(event) {
@@ -68,13 +76,29 @@
                         }
                     });
                 });
+                joinForm.submit(function(event) {
+                    event.preventDefault();
+                    socket.emit('joinLeague', joinLeague.val(), function(data) {
+                        
+                    });
+                });
                 socket.on('disconnect', function() {
                     $('#messages').append('<li>Disconnected</li>');
                 });
                 socket.on('output', function(data) {
-                    let html = '';
+                    let html = '<tr><th>Name</th><th>Team</th><th>RBI</th><th>H</th><th>OBP</th><th>AVG</th><th>ERA</th><th>WHIP</th><th>W</th></tr>';;
                     for(let i = 0; i < data.length; i++) {
-                        html += '<li>' + data[i].name + '</li>';
+                        html += '<tr>';
+                        html += '<th>' + data[i].name + '</th>';
+                        html += '<th>' + data[i].team + '</th>';
+                        html += '<th>' + data[i].RBI + '</th>';
+                        html += '<th>' + data[i].H + '</th>';
+                        html += '<th>' + data[i].OBP + '</th>';
+                        html += '<th>' + data[i].AVG + '</th>';
+                        html += '<th>' + data[i].ERA + '</th>';
+                        html += '<th>' + data[i].WHIP + '</th>';
+                        html += '<th>' + data[i].W + '</th>';
+                        html += '</tr>';
                     }
                     $('#players').empty().append(html);
                     draftForm.show();
