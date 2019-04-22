@@ -22,7 +22,11 @@
             <input type="text" id="draft" />
             <input type="submit" />
         </form>
-        <button id="create", type="submit">Create League</button>
+        <form id="create-form">
+            <label for="create">Create new league:</label>
+            <input type="text" id="create-name" />
+            <input type="submit" />
+        </form>
         <form id="join-form">
             <label for="join">Join:</label>
             <input type="text" id="join" />
@@ -53,6 +57,8 @@
                 let joinLeague = $('#join');
                 let joinForm = $('#join-form');
                 let playersList = $('#players ul');
+                let createName = $('#create-name');
+                let createForm = $('#create-form');
 
                 setNicknameForm.submit(function(event) {
                     event.preventDefault();
@@ -76,10 +82,27 @@
                         }
                     });
                 });
+                createForm.submit(function(event) {
+                    event.preventDefault();
+                    socket.emit('create', createName.val(), function(data, name) {
+                        if(data) {
+                            createForm.hide();
+                            joinForm.hide();
+                            alert(name);
+                        } else {
+                            alert('league name already exist');
+                        }
+                    });
+                });
                 joinForm.submit(function(event) {
                     event.preventDefault();
                     socket.emit('joinLeague', joinLeague.val(), function(data) {
-                        
+                        if(data) {
+                            createForm.hide();
+                            joinForm.hide();
+                        } else {
+                            alert('league does not exist');
+                        }
                     });
                 });
                 socket.on('disconnect', function() {

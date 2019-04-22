@@ -2,6 +2,7 @@ const express = require('express');
 const $ = require('cheerio');
 const rp = require('request-promise-native');
 //const cheerio = require('cheerio');
+const async = require('async');
 
 const app = express();
 const server = require('http').Server(app);
@@ -199,70 +200,103 @@ db.connect((err) => {
             console.log(rooms);
         });
     });
-
     let leagues = {};
-    leagueName: {
-        Participants:,
-        PlayerList:
-        DraftedList: {
-            Participant: Player
-        }
-    }
+    // let leagues = {
+    //    leagueName: {}
+    // };
+    // leagueName: {
+    //     Invitation code: 
+    //     Participants:,
+    //     PlayerList:
+    //     DraftedList: {
+    //         Participant: Player
+    //     }
+    // }
     const real = io.of('real-draft');
     real.on('connection', function(socket) {
         //socket.counter = counter++;
         //sockets[socket.counter] = socket;
         //console.log(`user ${socket.counter} connected`);
         console.log(`${socket.id} connected`);
-
         // get player full stats
         getPlayerData('player', function(result) {
             socket.emit('output', result);
         });
-        getPlayerList('player', function(result) {
-            playerList = JSON.stringify(result);
-        });
-
         socket.on('disconnect', function() {
             //delete sockets[socket.counter];
             //console.log(`user ${socket.counter} disconnected`);
             // let i = players.indexOf(socket);
             // players.splice(i, 1);
+            console.log(`${socket.id} has disconnected`);
         });
         socket.on('nickname', function(data, callback) {
-            if(nicknames.indexOf(data) != -1) {
-                callback(false);
+            // if(nicknames.indexOf(data) != -1) {
+            //     callback(false);
+            // } else {
+            //     callback(true);
+            //     nicknames.push(data);
+            //     socket.nickname = data;
+            //     real.emit('nicknames', nicknames);
+            // }
+            callback(true);
+            socket.nickname = data;
+        });
+        socket.on('create', function(data, callback) {
+            if(Object.keys(leagues).indexOf(data) == -1) {
+                callback(true, data);
+                socket.join(data, () => {
+                    socket.league = socket.rooms[data];
+                    leagues[data] = {};
+                    leagues[data].participants = [];
+                    leagues[data].participants.push(socket.nickname);
+                    getPlayerList('player', function(result) {
+                        leagues[data].playerList = result;
+                    });
+                    leagues[data].draftedList = [];
+                    leagues[data].turn;
+                    //generate a invitationCodedf
+                    leagues[data].invitationCode;
+                    
+                });
             } else {
-                callback(true);
-                nicknames.push(data);
-                socket.nickname = data;
-                real.emit('nicknames', nicknames);
+                callback(false);
             }
         });
-        
+        socket.on('joinLeague', function(data, callback) {
+            if(Object.keys(leagues).indexOf(data) != -1) {
+                callback(true, data);
+                socket.join(data, () => {
+                    socket.league = socket.rooms[data];
+                    leagues[data].participants.push(socket.nickname);
+                });
+            }
+        });
         socket.on('draft', function(data, callback) {
-            let turn = draftedList.length % nicknames.length;
+            leagues[socket.league].turn = leagues[socket.league].draftedList.length % leagues[socket.league].participants.length;
             //check whether player is already drafted
-            if(draftedList.indexOf(data) != -1) {
+            if(leagues[socket.league].draftedList.indexOf(data) != -1) {
                 callback(false);
-            } else if(playerList.indexOf(data) == -1) {
+            } else if(leagues[socket.league].playerList.indexOf(data) == -1) {
                 callback(false);
             } 
             //check whose turn to draft
-            else if(nicknames.indexOf(socket.nickname) !== turn) {
+            else if(leagues[socket.league].participants.indexOf(socket.nickname) !== leagues[socket.league].turn) {
                 callback(false);
             } else {
                 callback(true);
-                draftedList.push(data);
+                leagues[socket.league].draftedList.push(data);
+                leagues[socket.league].playerList.splice(leagues[socket.league].playerList.indexOf(data), 1);
                 //console.log(draftedList);
                 // let d = playerList.indexOf(data);
                 // console.log(d);
                 //playerList.splice(d, 1);
                 //console.log(playerList);
-                real.emit('message', `${socket.nickname} drafted ${data}`);
-                if(draftedList.length === nicknames.length * 3) {
-                    real.emit('end', 'Draft has ended');
-                }
+                socket.to(socket.league).emit('message', `${socket.nickname} drafted ${data}`);
+                console.log(leagues);
+                //real.emit('message', `${socket.nickname} drafted ${data}`);
+                // if(draftedList.length === nicknames.length * 3) {
+                //     real.emit('end', 'Draft has ended');
+                // }
             }
         });
     });
@@ -280,32 +314,57 @@ app.get('/mock-draft', (req, res) => {
     res.sendFile(__dirname + '/mock-draft.html')
 });
 
-app.get('/', (req, res) => {
+app.get('/batter', (req, res) => {
+async.parallel([
+    function(callback) {
+        scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=E02&gameno=01", callback)
+    },
+    function(callback) {
+        scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=L01&gameno=01", callback)
+    },
+    function(callback) {
+        scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=A02&gameno=01", callback)
+    },
+    function(callback) {
+        scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=B04&gameno=01", callback)
+    }
+],
+function(err, results) {
+    res.send(results);
+});
+});
+app.get('/pitcher', (req, res) => {
 // scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=E02&gameno=01");
 // scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=L01&gameno=01");
 // scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=A02&gameno=01");
 // scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=B04&gameno=01");
 // res.send('done');
-// scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=E02&year=2019&grade=2&syear=2019");
-// scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=L01&year=2019&grade=2&syear=2019");
-// scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=A02&year=2019&grade=2&syear=2019");
-// scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=B04&year=2019&grade=2&syear=2019");
-// res.send('done');
-
-// scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=E02&gameno=01")
-// .then((w)=>{
-//     console.log(w);
-    
-//     scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=L01&gameno=01");
-// })
-// .then(()=>{
-//     scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=A02&gameno=01");
-// })
-// .then(()=> {
-//     scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=B04&gameno=01");
-// })
-// .then(()=> res.send('done'))
-// .catch(err=>console.log(err));
+// async.parallel([
+//     scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=E02&year=2019&grade=2&syear=2019", callback),
+//     scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=L01&year=2019&grade=2&syear=2019", callback),
+//     scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=A02&year=2019&grade=2&syear=2019", callback),
+//     scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=B04&year=2019&grade=2&syear=2019", callback)
+// ],
+// function(err, results) {
+//     res.send('done');
+// });
+async.parallel([
+    function(callback) {
+        scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=E02&year=2019&grade=2&syear=2019", callback)
+    },
+    function(callback) {
+        scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=L01&year=2019&grade=2&syear=2019", callback)
+    },
+    function(callback) {
+        scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=A02&year=2019&grade=2&syear=2019", callback)
+    },
+    function(callback) {
+        scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=B04&year=2019&grade=2&syear=2019", callback)
+    }
+],
+function(err, results) {
+    res.send(results);
+});
         // const $ = cheerio.load(html);
         // const playerData = [];
         // $('tr td').each(function(i, element) {
@@ -344,8 +403,7 @@ const playerParse = function(url) {
         });
 };
 });
-function scrapeBatterData(url) {
-//return new Promise((resolve, reject) => {
+function scrapeBatterData(url, callback) {
 rp(url)
     .then(function(html){
         let playerUrls = [];
@@ -390,7 +448,7 @@ rp(url)
 
             });
         }
-        
+        callback(null, result);
     })
     .catch(function(err){
         console.log(err);
@@ -398,7 +456,7 @@ rp(url)
 //});
 }
 
-function scrapePitcherData(url) {
+function scrapePitcherData(url, callback) {
 //return new Promise((resolve, reject) => {
 rp(url)
     .then(function(html){
@@ -441,9 +499,9 @@ rp(url)
             sql = `update pitcher set ERA = ${bp.ERA}, WHIP = ${bp.WHIP}, W = ${bp.W} where player_id = '${bp.Player_id}'`;
             db.query(sql, (err, result) => {
                 if (err) throw err;
-
             });
         }
+        callback(null, result);
     })
     .catch(function(err){
         console.log(err);
