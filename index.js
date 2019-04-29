@@ -19,7 +19,11 @@ app.use(
 );
 app.use(bodyParser.json());
 
-const server = require("http").Server(app);
+let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
+let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
+let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
+let options = { key: privateKey, cert: certificate, ca: chain };
+const server = require("https").Server(options, app);
 // attach the socket.io server
 const io = require("socket.io")(server);
 //socket.io application
@@ -1038,4 +1042,5 @@ function shuffle(array) {
 
 	return array;
 }
-server.listen(80, () => console.log("server running on port 80"));
+
+server.listen(443, () => console.log("server running on port 80"));
