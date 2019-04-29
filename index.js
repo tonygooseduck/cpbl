@@ -4,6 +4,7 @@ const rp = require("request-promise-native");
 const async = require("async");
 const crypto = require("crypto");
 const schedule = require("node-schedule");
+const fs = require("fs");
 
 const express = require("express");
 const bodyParser = require("body-parser");
