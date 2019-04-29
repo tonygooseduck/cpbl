@@ -4,7 +4,7 @@
 		<!-- Required meta tags -->
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-
+		<link rel="canonical" href="https://getbootstrap.com/docs/4.0/examples/cover/" />
 		<!-- Bootstrap CSS -->
 		<link
 			rel="stylesheet"
@@ -14,26 +14,47 @@
 		/>
 		<title>cpbl manager</title>
 	</head>
-	<body>
-		<nav class="navbar navbar-light bg-light">
-			<span class="navbar-brand mb-0 h1">CPBL Manager</span>
-			<ul class="nav justify-content-end">
-				<li class="nav-item">
-					<a class="nav-link active" href="/login">Sign up & Sign in</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link" href="/user/draft">Start drafting</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link" href="/user/team">My League</a>
-				</li>
-			</ul>
-		</nav>
-		<div class="row">
-			<div class="col-8" id="team_ranking">yo</div>
-			<div class="col-4" id="rules">yoyo</div>
+	<body class="text-center">
+		<div class="cover-container d-flex h-100 p-3 mx-auto flex-column">
+			<nav class="navbar navbar-light bg-light">
+				<span class="navbar-brand mb-0 h1">CPBL Manager</span>
+				<ul class="nav justify-content-end">
+					<li class="nav-item">
+						<a class="nav-link active" href="/login">Sign up & Sign in</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="/user/draft">Start drafting</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" href="/user/team">My League</a>
+					</li>
+				</ul>
+			</nav>
+			<main role="main" class="inner cover">
+				<h1 class="cover-heading">鍵盤GM - best cpbl general manager</h1>
+				<p class="lead">
+					A game based on CPBL that lets you choose players, build your own team and compete with friends or other players. Join now and prove what
+					you are made of !
+				</p>
+				<p class="lead">
+					<a href="#" class="btn btn-lg btn-secondary">Learn more</a>
+				</p>
+			</main>
+			<div class="row">
+				<div class="col">
+					<h2>Who's playing</h2>
+					<div id="league"></div>
+				</div>
+				<div class="col">
+					<h2>What's special</h2>
+					<ul>
+						<li><h3>Build your dream team</h3></li>
+						<li><h3>Play with friends</h3></li>
+						<li><h3>Find out who's the best GM!</h3></li>
+					</ul>
+				</div>
+			</div>
 		</div>
-		<div class="row"></div>
 
 		<script
 			src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
@@ -50,5 +71,26 @@
 			integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
 			crossorigin="anonymous"
 		></script>
+		<script>
+			let xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function() {
+				if (this.readyState == 4 && this.status == 200) {
+					let html = "";
+					let data = JSON.parse(this.responseText);
+					html += "<table class='table'><thead><tr><th scope='col'>Number</th><th>Name</th></tr></thead><tbody>";
+					for (let i = 0; i < data.length; i++) {
+						html += "<tr>";
+						//html += "<th scope='row'>" + data[i].name + "</th>";
+						html += "<td>" + data[i].id + "</td>";
+						html += "<td>" + data[i].name + "</td>";
+						html += "</tr>";
+					}
+					html += "</tbody></table>";
+					document.querySelector("#league").innerHTML = html;
+				}
+			};
+			xhttp.open("GET", "/getAllLeague");
+			xhttp.send();
+		</script>
 	</body>
 </html>

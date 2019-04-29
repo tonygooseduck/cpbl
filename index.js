@@ -48,11 +48,11 @@ let j = schedule.scheduleJob("30 * * * * *", function(firedate) {
 		}
 		console.log("update complete");
 	});
-	// db.query(`insert into cpbl_schedule (date) values (${Date.now() + 60 * 60 * 1000})`, function(error, results, fields) {
-	// 	if (error) {
-	// 		throw error;
-	// 	}
-	// });
+	db.query(`insert into cpbl_schedule (date) values (${Date.now() + 15 * 60 * 1000})`, function(error, results, fields) {
+		if (error) {
+			throw error;
+		}
+	});
 });
 
 const mock = io.of("mock-draft");
@@ -422,7 +422,14 @@ app.use("/user/:id", function(req, res, next) {
 		//redirect to log in page
 	}
 });
-
+app.get("/getAllLeague", (req, res) => {
+	db.query("select * from cpbl_league", function(error, results, fields) {
+		if (error) {
+			throw error;
+		}
+		res.send(results);
+	});
+});
 app.get("/", (req, res) => {
 	res.sendFile(__dirname + "/main.html");
 });
@@ -625,19 +632,20 @@ app.post("/signup", (req, res) => {
 					});
 				}
 				res.cookie("access_token", user.access_token);
-				res.send({
-					data: {
-						access_token: user.access_token,
-						// 30 days of expiration time
-						access_expired: Math.floor((user.access_expired - now) / 1000),
-						user: {
-							id: user.id,
-							provider: user.provider,
-							name: user.name,
-							email: user.email
-						}
-					}
-				});
+				// res.send({
+				// 	data: {
+				// 		access_token: user.access_token,
+				// 		// 30 days of expiration time
+				// 		access_expired: Math.floor((user.access_expired - now) / 1000),
+				// 		user: {
+				// 			id: user.id,
+				// 			provider: user.provider,
+				// 			name: user.name,
+				// 			email: user.email
+				// 		}
+				// 	}
+				// });
+				res.redirect("/");
 			};
 			let now = Date.now();
 			let user;
@@ -712,18 +720,19 @@ app.post("/signin", (req, res) => {
 					res.send({ error: "Sign in error, user does not exist or incorrect password" });
 				} else {
 					res.cookie("access_token", user.access_token);
-					res.send({
-						data: {
-							access_token: user.access_token,
-							access_expired: Math.floor((user.access_expired - now) / 1000),
-							user: {
-								id: user.id,
-								provider: user.provider,
-								name: user.name,
-								email: user.email
-							}
-						}
-					});
+					// res.send({
+					// 	data: {
+					// 		access_token: user.access_token,
+					// 		access_expired: Math.floor((user.access_expired - now) / 1000),
+					// 		user: {
+					// 			id: user.id,
+					// 			provider: user.provider,
+					// 			name: user.name,
+					// 			email: user.email
+					// 		}
+					// 	}
+					// });
+					res.redirect("/");
 				}
 			};
 			if (results.length == 0) {
