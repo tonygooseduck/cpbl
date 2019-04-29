@@ -1,10 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
-		<title>Document</title>
+		<!-- Required meta tags -->
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+		<!-- Bootstrap CSS -->
+		<link
+			rel="stylesheet"
+			href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+			integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+			crossorigin="anonymous"
+		/>
+		<title></title>
 	</head>
-	<body></body>
+	<body>
+		<nav class="navbar navbar-light bg-light">
+			<span class="navbar-brand mb-0 h1">CPBL Manager</span>
+			<ul class="nav justify-content-end">
+				<li class="nav-item">
+					<a class="nav-link active" href="/login">Sign up & Sign in</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/user/draft">Start drafting</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/user/team">My League</a>
+				</li>
+			</ul>
+		</nav>
+		<div class="row">
+			<div id="schedule" class="col"></div>
+			<div id="lineup" class="col">
+				<div id="team"></div>
+				<input type="text" id="league" />
+				<input type="button" value="Change league" id="changeLeague" />
+				<div id="players"></div>
+				<div id="result"></div>
+				<input type="text" id="add" />
+				<input type="button" value="Add to lineup" id="addButton" />
+				<input type="text" id="remove" />
+				<input type="button" value="Remove from lineup" id="removeButton" />
+			</div>
+		</div>
+
+		<script>
+			let xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function() {
+				let html = "";
+				if (this.readyState == 4 && this.status == 200) {
+					let data = JSON.parse(this.responseText);
+					for (let i = 0; i < data.length; i++) {
+						html += "<span class='badge badge-primary'>" + data[i].league_id + "</span>";
+					}
+					document.querySelector("#team").innerHTML = html;
+				}
+			};
+			xhttp.open("GET", "/getUserTeam", true);
+			xhttp.send();
+		</script>
+		<script>
+			document.querySelector("#changeLeague").addEventListener("click", function() {
+				let html = "";
+				xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() {
+					if (this.readyState == 4 && this.status == 200) {
+						let data = JSON.parse(this.responseText);
+						html += "<table class='table'><thead><tr><th scope='col'>Name</th><th>Status</th></tr></thead><tbody>";
+						for (let i = 0; i < data.length; i++) {
+							html += "<tr>";
+							//html += "<th scope='row'>" + data[i].name + "</th>";
+							html += "<td>" + data[i].player_name + "</td>";
+							html += "<td>" + data[i].player_status + "</td>";
+							html += "</tr>";
+						}
+						html += "</tbody></table>";
+						document.querySelector("#players").innerHTML = html;
+					}
+				};
+				xhttp.open("POST", "/getUserPlayers");
+				xhttp.setRequestHeader("Content-Type", "application/json");
+				xhttp.send(JSON.stringify({ league: document.querySelector("#league").value }));
+				// schedule
+				let html2 = "";
+				let xhttp2 = new XMLHttpRequest();
+				xhttp2.onreadystatechange = function() {
+					if (this.readyState == 4 && this.status == 200) {
+						let data = JSON.parse(this.responseText);
+						html2 += "<table class='table'><thead><tr><th scope='col'>Date</th><th>Team 1</th><th>Team 2</th><th>Result</th></tr></thead><tbody>";
+						for (let i = 0; i < data.length; i++) {
+							html2 += "<tr>";
+							//html += "<th scope='row'>" + data[i].name + "</th>";
+							html2 += "<td>" + data[i].date + "</td>";
+							html2 += "<td>" + data[i].home_user_id + "</td>";
+							html2 += "<td>" + data[i].away_user_id + "</td>";
+							html2 += "<td>" + data[i].result + "</td>";
+							html2 += "</tr>";
+						}
+						html2 += "</tbody></table>";
+						document.querySelector("#schedule").innerHTML = html2;
+					}
+				};
+				xhttp2.open("POST", "/getUserSchedule");
+				xhttp2.setRequestHeader("Content-Type", "application/json");
+				xhttp2.send(JSON.stringify({ league: document.querySelector("#league").value }));
+			});
+		</script>
+		<script>
+			document.querySelector("#addButton").addEventListener("click", function() {
+				xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() {
+					if (this.readyState == 4 && this.status == 200) {
+						let data = JSON.parse(this.responseText);
+						document.querySelector("#result").innerHTML = "<span class='badge badge-info'>" + data.result + "</span>";
+					}
+				};
+				xhttp.open("POST", "/add/lineup");
+				xhttp.setRequestHeader("Content-Type", "application/json");
+				xhttp.send(JSON.stringify({ name: document.querySelector("#add").value, league: document.querySelector("#league").value }));
+			});
+		</script>
+		<script>
+			document.querySelector("#removeButton").addEventListener("click", function() {
+				xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() {
+					if (this.readyState == 4 && this.status == 200) {
+						let data = JSON.parse(this.responseText);
+						document.querySelector("#result").innerHTML = "<span class='badge badge-info'>" + data.result + "</span>";
+					}
+				};
+				xhttp.open("POST", "/remove/lineup");
+				xhttp.setRequestHeader("Content-Type", "application/json");
+				xhttp.send(JSON.stringify({ name: document.querySelector("#remove").value, league: document.querySelector("#league").value }));
+			});
+		</script>
+		<script
+			src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+			integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+			integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+			crossorigin="anonymous"
+		></script>
+		<script
+			src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+			integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+			crossorigin="anonymous"
+		></script>
+	</body>
 </html>

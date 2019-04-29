@@ -3,10 +3,12 @@ const rp = require("request-promise-native");
 //const cheerio = require('cheerio');
 const async = require("async");
 const crypto = require("crypto");
+const schedule = require("node-schedule");
 
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const db = require("./db.js");
 const app = express();
 
 app.use(cookieParser());
@@ -16,22 +18,6 @@ app.use(
 	})
 );
 app.use(bodyParser.json());
-//database
-const mysql = require("mysql");
-const db = mysql.createConnection({
-	host: "localhost",
-	port: "3306",
-	user: "root",
-	password: "",
-	database: "test"
-});
-db.connect(err => {
-	if (err) {
-		console.error("error connecting: " + err.stack);
-		return;
-	}
-	console.log("connected as id: " + db.threadId);
-});
 
 const server = require("http").Server(app);
 // attach the socket.io server
@@ -45,6 +31,29 @@ let rooms = {};
 //         });
 //     }
 // }
+
+let j = schedule.scheduleJob("30 * * * * *", function(firedate) {
+	console.log("node-schedule:" + firedate + "actual time:" + new Date());
+	db.query(`select * from cpbl_game where date < ${Date.now()} and result is NULL`, function(error, results, fields) {
+		if (error) {
+			throw error;
+		}
+		for (let i = 0; i < results.length; i++) {
+			let temp = shuffle(["W", "L"]);
+			db.query(`update cpbl_game set result = '${temp[0]}' where id = '${results[i].id}'`, function(error, results, fields) {
+				if (error) {
+					throw error;
+				}
+			});
+		}
+		console.log("update complete");
+	});
+	// db.query(`insert into cpbl_schedule (date) values (${Date.now() + 60 * 60 * 1000})`, function(error, results, fields) {
+	// 	if (error) {
+	// 		throw error;
+	// 	}
+	// });
+});
 
 const mock = io.of("mock-draft");
 mock.on("connection", function(socket) {
@@ -257,11 +266,12 @@ real.on("connection", function(socket) {
 		callback(true);
 		socket.nickname = data;
 	});
-	socket.on("create", function(data, user_id, callback) {
+	socket.on("create", function(data, user_id, user_name, callback) {
 		if (Object.keys(leagues).indexOf(data) == -1) {
 			callback(true, data);
 			socket.join(data, () => {
 				socket.nickname = user_id;
+				socket.user_name = user_name;
 				socket.league = socket.rooms[data];
 				leagues[data] = {};
 				leagues[data].participants = {};
@@ -278,14 +288,16 @@ real.on("connection", function(socket) {
 			callback(false);
 		}
 	});
-	socket.on("joinLeague", function(data, user_id, callback) {
+	socket.on("joinLeague", function(data, user_id, user_name, callback) {
 		if (Object.keys(leagues).indexOf(data) != -1) {
 			callback(true, data);
 			socket.join(data, () => {
 				console.log(socket.id);
 				socket.nickname = user_id;
+				socket.user_name = user_name;
 				socket.league = socket.rooms[data];
 				leagues[data].participants[socket.nickname] = socket.id;
+				socket.to(socket.league).emit("message", `${socket.user_name} joined the room!`);
 			});
 		}
 	});
@@ -293,21 +305,21 @@ real.on("connection", function(socket) {
 		leagues[socket.league].turn = leagues[socket.league].draftedList.length % Object.keys(leagues[socket.league].participants).length;
 		//check whether player is already drafted
 		if (leagues[socket.league].draftedList.indexOf(data) != -1) {
-			callback(false);
+			callback(false, "Player already drafted");
 		} else if (leagues[socket.league].playerList.indexOf(data) == -1) {
-			callback(false);
+			callback(false, "Player eithe drafted or does not exist");
 		}
 		//check whose turn to drafts
 		else if (Object.keys(leagues[socket.league].participants).indexOf(socket.nickname.toString()) !== leagues[socket.league].turn) {
 			console.log("here");
-			callback(false);
+			callback(false, "Another player is drafting");
 		} else {
 			callback(true);
 			let pick = {};
 			pick[socket.nickname] = data;
 			leagues[socket.league].draftedList.push(pick);
 			leagues[socket.league].playerList.splice(leagues[socket.league].playerList.indexOf(data), 1);
-			socket.to(socket.league).emit("message", `${socket.nickname} drafted ${data}`);
+			socket.to(socket.league).emit("message", `${socket.user_name} drafted ${data}`);
 			//real.emit('message', `${socket.nickname} drafted ${data}`);
 			if (leagues[socket.league].draftedList.length === Object.keys(leagues[socket.league].participants).length * 3) {
 				console.log(leagues[socket.league].draftedList);
@@ -347,7 +359,38 @@ real.on("connection", function(socket) {
 								}
 							});
 						}
-						db.commit(commitCallback);
+						//db.commit(commitCallback);
+						let participants = Object.keys(leagues[socket.league].participants).map(function(id) {
+							return parseInt(id);
+						});
+						db.query(`select * from cpbl_schedule where date > ${Date.now()}`, function(error, results, fields) {
+							if (error) {
+								db.rollback(function() {
+									throw error;
+								});
+								return;
+							}
+							let temp = results;
+							for (let i = 0; i < temp.length; i++) {
+								participants = shuffle(participants);
+								db.query(
+									`insert into cpbl_game (league_id, date, home_user_id, away_user_id) values ('${league_id}','${temp[i].date}', '${
+										participants[0]
+									}', '${participants[1]}')
+								, ('${league_id}','${temp[i].date}', '${participants[2]}', '${participants[3]}')`,
+									function(error, results, fields) {
+										if (error) {
+											db.rollback(function() {
+												throw error;
+											});
+											return;
+										}
+									}
+								);
+							}
+							db.commit(commitCallback);
+						});
+						//db.commit(commitCallback);
 					});
 				});
 			}
@@ -381,9 +424,11 @@ app.use("/user/:id", function(req, res, next) {
 });
 
 app.get("/", (req, res) => {
+	res.sendFile(__dirname + "/main.html");
+});
+app.get("/login", (req, res) => {
 	res.sendFile(__dirname + "/user.html");
 });
-
 app.get("/user/draft", (req, res) => {
 	res.sendFile(__dirname + "/index.html");
 });
@@ -393,9 +438,88 @@ app.get("/getplayerdata", (req, res) => {
 		res.send(result);
 	});
 });
+app.get("/getUserTeam", (req, res) => {
+	if (req.cookies.access_token) {
+		db.query("select * from cpbl_user where access_token = ?", [req.cookies.access_token], function(error, results, fields) {
+			if (error) {
+				throw error;
+			}
+			if (results.length === 0) {
+				res.send({ error: "Invalid access token, please log in" });
+				return;
+			}
+			let id = results[0].id;
+			db.query(`select league_id from cpbl_draft where user_id = '${id}' group by league_id`, function(error, results, fields) {
+				if (error) {
+					throw error;
+				}
+				res.send(results);
+			});
+		});
+	}
+});
+app.post("/getUserPlayers", (req, res) => {
+	let data = req.body;
+	if (req.cookies.access_token) {
+		db.query("select * from cpbl_user where access_token = ?", [req.cookies.access_token], function(error, results, fields) {
+			if (error) {
+				throw error;
+			}
+			if (results.length === 0) {
+				res.send({ error: "Invalid access token, please log in" });
+				return;
+			}
+			let id = results[0].id;
+			db.query(`select * from cpbl_draft where user_id = '${id}' and league_id = '${data.league}'`, function(error, results, fields) {
+				if (error) {
+					throw error;
+				}
+				res.send(results);
+			});
+		});
+	}
+});
+app.post("/getUserSchedule", (req, res) => {
+	let data = req.body;
+	if (req.cookies.access_token) {
+		db.query("select * from cpbl_user where access_token = ?", [req.cookies.access_token], function(error, results, fields) {
+			if (error) {
+				throw error;
+			}
+			if (results.length === 0) {
+				res.send({ error: "Invalid access token, please log in" });
+				return;
+			}
+			let id = results[0].id;
+			let results1;
+			db.query(
+				`select date, result, home_user_id, away_user_id from cpbl_game where home_user_id = '${id}' and league_id = '${data.league}'`,
+				function(error, results, fields) {
+					if (error) {
+						throw error;
+					}
+					results1 = results;
+					db.query(
+						`select date, result, home_user_id, away_user_id from cpbl_game where away_user_id = '${id}' and league_id = '${data.league}'`,
+						function(error, results, fields) {
+							if (error) {
+								throw error;
+							}
+							res.send(results1.concat(results));
+						}
+					);
+				}
+			);
+		});
+	}
+});
 app.get("/user/mock-draft", (req, res) => {
 	res.sendFile(__dirname + "/mock-draft.html");
 });
+app.get("/user/team", (req, res) => {
+	res.sendFile(__dirname + "/team.html");
+});
+
 app.get("/profile", function(req, res) {
 	let now = Date.now();
 	if (req.cookies.access_token) {
@@ -421,6 +545,59 @@ app.get("/profile", function(req, res) {
 		res.send("please log in first");
 	}
 });
+app.post("/add/lineup", (req, res) => {
+	let data = req.body;
+	if (req.cookies.access_token) {
+		db.query("select * from cpbl_user where access_token = ?", [req.cookies.access_token], function(error, results, fields) {
+			if (error) {
+				throw error;
+			}
+			if (results.length === 0) {
+				res.send({ error: "Invalid access token, please log in" });
+				return;
+			}
+			let id = results[0].id;
+			let query = "update cpbl_draft set player_status = ? where user_id = ? and player_name = ? and league_id = ?";
+			db.query(query, ["Start", id, data.name, data.league], function(error, results, fields) {
+				if (error) {
+					throw error;
+				}
+				if (results.affectedRows === 1) {
+					res.send({ result: "Success" });
+				} else {
+					res.send({ result: "update fail" });
+				}
+			});
+		});
+	}
+});
+app.post("/remove/lineup", (req, res) => {
+	let data = req.body;
+	if (req.cookies.access_token) {
+		db.query("select * from cpbl_user where access_token = ?", [req.cookies.access_token], function(error, results, fields) {
+			if (error) {
+				throw error;
+			}
+			if (results.length === 0) {
+				res.send({ error: "Invalid access token, please log in" });
+				return;
+			}
+			let id = results[0].id;
+			let query = "update cpbl_draft set player_status = ? where user_id = ? and player_name = ? and player_status = ? and league_id = ?";
+			db.query(query, ["Bench", id, data.name, "Start", data.league], function(error, results, fields) {
+				if (error) {
+					throw error;
+				}
+				if (results.affectedRows === 1) {
+					res.send({ result: "Success" });
+				} else {
+					res.send({ result: "update fail" });
+				}
+			});
+		});
+	}
+});
+
 app.post("/signup", (req, res) => {
 	let data = req.body;
 	if (!data.name || !data.email || !data.password) {

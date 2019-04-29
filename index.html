@@ -33,45 +33,67 @@
 		</style>
 	</head>
 	<body>
-		<form id="set-nickname">
-			<label for="nickname">Nickname:</label>
-			<input type="text" id="nickname" />
-			<input type="submit" />
-		</form>
-		<form id="draft-form">
-			<label for="draft">Draft:</label>
-			<input type="text" id="draft" />
-			<input type="submit" />
-		</form>
-		<form id="create-form">
-			<label for="create">Create new league:</label>
-			<input type="text" id="create-name" />
-			<input type="submit" />
-		</form>
-		<form id="join-form">
-			<label for="join">Join:</label>
-			<input type="text" id="join" />
-			<input type="submit" />
-		</form>
-		<section>
-			<ul id="nicknames"></ul>
-		</section>
-		<section>
-			<ul id="messages"></ul>
-		</section>
-		<section>
-			<div id="players"></div>
-		</section>
+		<nav class="navbar navbar-light bg-light">
+			<span class="navbar-brand mb-0 h1">CPBL Manager</span>
+			<ul class="nav justify-content-end">
+				<li class="nav-item">
+					<a class="nav-link active" href="/login">Sign up & Sign in</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/user/draft">Start drafting</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/user/team">My League</a>
+				</li>
+			</ul>
+		</nav>
+		<div class="container">
+			<div class="row">
+				<div class="col">
+					<form id="set-nickname">
+						<label for="nickname">Nickname:</label>
+						<input type="text" id="nickname" />
+						<input type="submit" />
+					</form>
+					<form id="draft-form">
+						<label for="draft">Draft:</label>
+						<input type="text" id="draft" />
+						<input type="submit" />
+					</form>
+					<form id="create-form">
+						<label for="create">Create new league:</label>
+						<input type="text" id="create-name" />
+						<input type="submit" />
+					</form>
+					<form id="join-form">
+						<label for="join">Join:</label>
+						<input type="text" id="join" />
+						<input type="submit" />
+					</form>
+				</div>
+				<div class="col">
+					<section>
+						<ul id="messages"></ul>
+					</section>
+				</div>
+			</div>
+			<div class="row">
+				<div id="batters" class="col"></div>
+				<div id="pitchers" class="col"></div>
+			</div>
+		</div>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 		<script src="/socket.io/socket.io.js"></script>
 		<script>
 			let user_id;
+			let user_name;
 			let xhttp = new XMLHttpRequest();
 			xhttp.onreadystatechange = function() {
 				if (this.readyState == 4 && this.status == 200) {
 					let data = JSON.parse(this.responseText);
 					document.querySelector("#set-nickname").innerHTML = data.name;
 					user_id = data.id;
+					user_name = data.name;
 				}
 			};
 			xhttp.open("GET", "/profile", true);
@@ -81,7 +103,7 @@
 				reconnection: true
 			});
 			socket.on("connect", function() {
-				$("#messages").append($("<li></li>").text(socket.id));
+				//$("#messages").append($("<li></li>").text(socket.id));
 			});
 			window.setInterval(function() {
 				socket.emit("abc", "alive");
@@ -110,18 +132,18 @@
 				});
 				draftForm.submit(function(event) {
 					event.preventDefault();
-					socket.emit("draft", draftPlayer.val(), user_id, function(data) {
+					socket.emit("draft", draftPlayer.val(), user_id, function(data, message) {
 						if (data) {
 							alert("Player drafted successfully");
 							//draftForm.hide();
 						} else {
-							alert("player draft fail");
+							alert(message);
 						}
 					});
 				});
 				createForm.submit(function(event) {
 					event.preventDefault();
-					socket.emit("create", createName.val(), user_id, function(data, name) {
+					socket.emit("create", createName.val(), user_id, user_name, function(data, name) {
 						if (data) {
 							createForm.hide();
 							joinForm.hide();
@@ -133,7 +155,7 @@
 				});
 				joinForm.submit(function(event) {
 					event.preventDefault();
-					socket.emit("joinLeague", joinLeague.val(), user_id, function(data) {
+					socket.emit("joinLeague", joinLeague.val(), user_id, user_name, function(data) {
 						if (data) {
 							createForm.hide();
 							joinForm.hide();
@@ -145,36 +167,41 @@
 				socket.on("disconnect", function() {
 					$("#messages").append("<li>Disconnected</li>");
 					//socket.connect();
-					console.log(socket);
+					//console.log(socket);
 					socket.emit("joinLeague", "league1", user_id, function(data) {});
 				});
 				socket.on("output", function(data) {
 					let html =
-						"<table class='table'><thead><tr><th scope='col' style='width: 5%'>Name</th><th style='width: 10%'>Team</th><th style='width: 10%'>RBI</th><th style='width: 10%'>H</th><th style='width: 10%'>OBP</th><th style='width: 10%'>AVG</th></tr>";
+						"<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th scope='col'>Team</th><th scope='col'>RBI</th><th scope='col'>H</th><th scope='col'>OBP</th><th scope='col'>AVG</th></tr></thead><tbody>";
 					for (let i = 0; i < 69; i++) {
 						html += "<tr>";
-						html += "<th>" + data[i].name + "</th>";
-						html += "<th>" + data[i].team + "</th>";
-						html += "<th>" + data[i].RBI + "</th>";
-						html += "<th>" + data[i].H + "</th>";
-						html += "<th>" + data[i].OBP + "</th>";
-						html += "<th>" + data[i].AVG + "</th>";
+						html += "<th scope='row'>" + data[i].name + "</th>";
+						html += "<td>" + data[i].team + "</td>";
+						html += "<td>" + data[i].RBI + "</td>";
+						html += "<td>" + data[i].H + "</td>";
+						html += "<td>" + data[i].OBP + "</td>";
+						html += "<td>" + data[i].AVG + "</td>";
 						html += "</tr>";
 					}
-					html += "<table class='table'><thead><tr><th scope='col'>Name</th><th>Team</th><th>ERA</th><th>WHIP</th><th>W</th></tr>";
-					for (let i = 70; i < 126; i++) {
-						html += "<tr>";
-						html += "<th>" + data[i].name + "</th>";
-						html += "<th>" + data[i].team + "</th>";
-						html += "<th>" + data[i].ERA + "</th>";
-						html += "<th>" + data[i].WHIP + "</th>";
-						html += "<th>" + data[i].W + "</th>";
-						html += "</tr>";
-					}
-					html += "</tbody><table>";
-					$("#players")
+					html += "</tbody></table>";
+					$("#batters")
 						.empty()
 						.append(html);
+					let html2 =
+						"<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th>Team</th><th>ERA</th><th>WHIP</th><th>W</th></tr></thead><tbody>";
+					for (let i = 70; i < 126; i++) {
+						html2 += "<tr>";
+						html2 += "<th scope='row'>" + data[i].name + "</th>";
+						html2 += "<td>" + data[i].team + "</td>";
+						html2 += "<td>" + data[i].ERA + "</td>";
+						html2 += "<td>" + data[i].WHIP + "</td>";
+						html2 += "<td>" + data[i].W + "</td>";
+						html2 += "</tr>";
+					}
+					html2 += "</tbody></table>";
+					$("#pitchers")
+						.empty()
+						.append(html2);
 					draftForm.show();
 				});
 
