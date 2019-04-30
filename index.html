@@ -161,7 +161,7 @@
 				socket.on("output", function(data) {
 					let html =
 						"<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th scope='col'>Team</th><th scope='col'>RBI</th><th scope='col'>H</th><th scope='col'>OBP</th><th scope='col'>AVG</th></tr></thead><tbody>";
-					for (let i = 0; i < 69; i++) {
+					for (let i = 0; i < 82; i++) {
 						html += "<tr>";
 						html += "<th scope='row'>" + data[i].name + "</th>";
 						html += "<td>" + data[i].team + "</td>";
@@ -177,7 +177,7 @@
 						.append(html);
 					let html2 =
 						"<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th>Team</th><th>ERA</th><th>WHIP</th><th>W</th></tr></thead><tbody>";
-					for (let i = 70; i < 126; i++) {
+					for (let i = 82; i < 142; i++) {
 						html2 += "<tr>";
 						html2 += "<th scope='row'>" + data[i].name + "</th>";
 						html2 += "<td>" + data[i].team + "</td>";

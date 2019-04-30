@@ -902,22 +902,58 @@ function scrapeBatterData(url, callback) {
 		.then(function(result) {
 			console.log(result);
 			let sql;
-			let bp;
-			let temp = [];
-			for (let i = 0; i < result.length; i++) {
-				bp = result[i];
-				//sql = `insert into batter (name, team, player_id, RBI, H, OBP, AVG) values ('${bp.Name}', '${bp.Team}', '${bp.Player_id}', '${bp.RBI}', '${bp.H}', '${bp.OBP}', '${bp.AVG}')`;
-				sql = `update batter set RBI = ${bp.RBI}, H = ${bp.H}, OBP = ${bp.OBP}, AVG = ${bp.AVG} where player_id = '${bp.Player_id}'`;
-				db.query(sql, (err, result) => {
-					if (err) throw err;
-				});
-			}
+			async.eachLimit(
+				result,
+				1,
+				function(bp, callback) {
+					async.waterfall(
+						[
+							function(callback) {
+								sql = `update batter set RBI = ${bp.RBI}, H = ${bp.H}, OBP = ${bp.OBP}, AVG = ${bp.AVG} where player_id = '${bp.Player_id}'`;
+								db.query(sql, (error, results) => {
+									if (error) {
+										throw error;
+									}
+									if (results.affectedRows == 0) {
+										callback(null, results.affectedRows, bp);
+									} else {
+										callback(null, results.affectedRows, "haha");
+									}
+								});
+							},
+							function(affectedRows, bp, callback) {
+								if (affectedRows == 0) {
+									sql = `insert into batter (name, team, player_id, RBI, H, OBP, AVG) values ('${bp.Name}', '${bp.Team}', '${bp.Player_id}', '${
+										bp.RBI
+									}', '${bp.H}', '${bp.OBP}', '${bp.AVG}')`;
+									db.query(sql, (error, results) => {
+										if (error) {
+											throw error;
+										}
+										callback(null, "new player inserted");
+									});
+								} else {
+									callback(null, "player exist, updated");
+								}
+							}
+						],
+						function(err, result) {
+							//console.log(result);
+							callback();
+						}
+					);
+				},
+				function(err) {
+					if (err) {
+						console.log(err.message);
+					}
+				}
+			);
 			callback(null, result);
 		})
 		.catch(function(err) {
 			console.log(err);
 		});
-	//});
 }
 
 function scrapePitcherData(url, callback) {
@@ -956,17 +992,52 @@ function scrapePitcherData(url, callback) {
 		.then(function(result) {
 			console.log(result);
 			let sql;
-			let bp;
-			for (let i = 0; i < result.length; i++) {
-				bp = result[i];
-				// sql = `insert into pitcher (name, team, player_id, ERA, WHIP, W) values ('${bp.Name}', '${bp.Team}', '${bp.Player_id}', '${bp.ERA}', '${
-				// 	bp.WHIP
-				// }', '${bp.W}')`;
-				sql = `update pitcher set ERA = ${bp.ERA}, WHIP = ${bp.WHIP}, W = ${bp.W} where player_id = '${bp.Player_id}'`;
-				db.query(sql, (err, result) => {
-					if (err) throw err;
-				});
-			}
+			async.eachLimit(
+				result,
+				1,
+				function(bp, callback) {
+					async.waterfall(
+						[
+							function(callback) {
+								sql = `update pitcher set ERA = ${bp.ERA}, WHIP = ${bp.WHIP}, W = ${bp.W} where player_id = '${bp.Player_id}'`;
+								db.query(sql, (error, results) => {
+									if (error) {
+										throw error;
+									} else if (results.affectedRows == 0) {
+										callback(null, results.affectedRows, bp);
+									} else {
+										callback(null, results.affectedRows, "haha");
+									}
+								});
+							},
+							function(affectedRows, bp, callback) {
+								if (affectedRows == 0) {
+									sql = `insert into pitcher (name, team, player_id, ERA, WHIP, W) values ('${bp.Name}', '${bp.Team}', '${bp.Player_id}', '${
+										bp.ERA
+									}', '${bp.WHIP}', '${bp.W}')`;
+									db.query(sql, (error, results) => {
+										if (error) {
+											throw error;
+										}
+										callback(null, "new player inserted");
+									});
+								} else {
+									callback(null, "player exist, updated");
+								}
+							}
+						],
+						function(err, result) {
+							console.log(result);
+							callback();
+						}
+					);
+				},
+				function(err) {
+					if (err) {
+						console.log(err.message);
+					}
+				}
+			);
 			callback(null, result);
 		})
 		.catch(function(err) {
