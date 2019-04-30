@@ -50,16 +50,10 @@
 		<div class="container">
 			<div class="row">
 				<div class="col">
-					<form id="set-nickname">
-						<label for="nickname">Nickname:</label>
-						<input type="text" id="nickname" />
-						<input type="submit" />
-					</form>
-					<form id="draft-form">
-						<label for="draft">Draft:</label>
-						<input type="text" id="draft" />
-						<input type="submit" />
-					</form>
+					<div id="welcome"></div>
+					<div>
+						<ul id="nicknames"></ul>
+					</div>
 					<form id="create-form">
 						<label for="create">Create new league:</label>
 						<input type="text" id="create-name" />
@@ -68,6 +62,11 @@
 					<form id="join-form">
 						<label for="join">Join:</label>
 						<input type="text" id="join" />
+						<input type="submit" />
+					</form>
+					<form id="draft-form">
+						<label for="draft">Draft:</label>
+						<input class="form-control" type="text" placeholder="Click on player row" id="draft" readonly />
 						<input type="submit" />
 					</form>
 				</div>
@@ -91,7 +90,7 @@
 			xhttp.onreadystatechange = function() {
 				if (this.readyState == 4 && this.status == 200) {
 					let data = JSON.parse(this.responseText);
-					document.querySelector("#set-nickname").innerHTML = data.name;
+					document.querySelector("#welcome").innerHTML = data.name;
 					user_id = data.id;
 					user_name = data.name;
 				}
@@ -102,16 +101,12 @@
 			let socket = io("/real-draft", {
 				reconnection: true
 			});
-			socket.on("connect", function() {
-				//$("#messages").append($("<li></li>").text(socket.id));
-			});
+			socket.on("connect", function() {});
 			window.setInterval(function() {
 				socket.emit("abc", "alive");
 			}, 10000);
+
 			jQuery(function($) {
-				let nickname = $("#nickname");
-				let setNicknameForm = $("#set-nickname");
-				let nicknamesList = $("nicknames ul");
 				let draftPlayer = $("#draft");
 				let draftForm = $("#draft-form");
 				let joinLeague = $("#join");
@@ -120,22 +115,11 @@
 				let createName = $("#create-name");
 				let createForm = $("#create-form");
 
-				setNicknameForm.submit(function(event) {
-					event.preventDefault();
-					socket.emit("nickname", nickname.val(), function(data) {
-						if (data) {
-							setNicknameForm.hide();
-						} else {
-							setNicknameForm.prepend("<p>nickname already taken.</p>");
-						}
-					});
-				});
 				draftForm.submit(function(event) {
 					event.preventDefault();
 					socket.emit("draft", draftPlayer.val(), user_id, function(data, message) {
 						if (data) {
 							alert("Player drafted successfully");
-							//draftForm.hide();
 						} else {
 							alert(message);
 						}
@@ -145,8 +129,10 @@
 					event.preventDefault();
 					socket.emit("create", createName.val(), user_id, user_name, function(data, name) {
 						if (data) {
+							document.querySelector("#welcome").innerHTML = `${user_name} Welcome to ${createName.val()}`;
 							createForm.hide();
 							joinForm.hide();
+							draftForm.show();
 							alert(name);
 						} else {
 							alert("league name already exist");
@@ -157,8 +143,10 @@
 					event.preventDefault();
 					socket.emit("joinLeague", joinLeague.val(), user_id, user_name, function(data) {
 						if (data) {
+							document.querySelector("#welcome").innerHTML = `Welcome to ${joinLeague.val()}`;
 							createForm.hide();
 							joinForm.hide();
+							draftForm.show();
 						} else {
 							alert("league does not exist");
 						}
@@ -202,18 +190,15 @@
 					$("#pitchers")
 						.empty()
 						.append(html2);
-					draftForm.show();
+					draftForm.hide();
 				});
 
 				socket.on("nicknames", function(data) {
-					let html = "";
-					for (let i = 0; i < data.length; i++) {
-						html += "<li>" + data[i] + "</li>";
-					}
-					$("#nicknames")
-						.empty()
-						.append(html);
-					//$('#nicknames').empty().append($('<li></li>').text(html));
+					// let html = "";
+					// for (let i = 0; i < data.length; i++) {
+					// 	html += "<li>" + data[i] + "</li>";
+					// }
+					$("#nicknames").append($("<li></li>").text(data));
 				});
 				socket.on("message", function(message) {
 					$("#messages").append($("<li></li>").text(message));
@@ -222,6 +207,14 @@
 					$("#messages").append($("<li></li>").text(message));
 					draftForm.hide();
 				});
+			});
+		</script>
+		<script>
+			document.querySelector("body").addEventListener("click", event => {
+				if (event.target.parentElement.tagName === "TR" && event.target.parentElement.firstChild.innerHTML != "Name") {
+					console.log(event.target.parentElement.firstChild.innerHTML);
+					document.querySelector("#draft").value = event.target.parentElement.firstChild.innerHTML;
+				}
 			});
 		</script>
 		<script

@@ -20,12 +20,13 @@ app.use(
 );
 app.use(bodyParser.json());
 
-let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
-let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
-let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
-let options = { key: privateKey, cert: certificate, ca: chain };
-const server = require("https").Server(options, app);
+// let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
+// let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
+// let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
+//let options = { key: privateKey, cert: certificate, ca: chain };
+//const server = require("https").Server(options, app);
 // attach the socket.io server
+const server = require("http").Server(app);
 const io = require("socket.io")(server);
 //socket.io application
 let rooms = {};
@@ -53,11 +54,11 @@ let j = schedule.scheduleJob("30 * * * * *", function(firedate) {
 		}
 		console.log("update complete");
 	});
-	db.query(`insert into cpbl_schedule (date) values (${Date.now() + 15 * 60 * 1000})`, function(error, results, fields) {
-		if (error) {
-			throw error;
-		}
-	});
+	// db.query(`insert into cpbl_schedule (date) values (${Date.now() + 15 * 60 * 1000})`, function(error, results, fields) {
+	// 	if (error) {
+	// 		throw error;
+	// 	}
+	// });
 });
 
 const mock = io.of("mock-draft");
@@ -296,6 +297,8 @@ real.on("connection", function(socket) {
 	socket.on("joinLeague", function(data, user_id, user_name, callback) {
 		if (Object.keys(leagues).indexOf(data) != -1) {
 			callback(true, data);
+			//to-do deal avoid new player joining room after there are 4 players
+			// player_number < 4 OR user_id already in participants list
 			socket.join(data, () => {
 				console.log(socket.id);
 				socket.nickname = user_id;
@@ -303,20 +306,23 @@ real.on("connection", function(socket) {
 				socket.league = socket.rooms[data];
 				leagues[data].participants[socket.nickname] = socket.id;
 				socket.to(socket.league).emit("message", `${socket.user_name} joined the room!`);
+				console.log(Object.keys(leagues[socket.league].participants));
 			});
 		}
 	});
 	socket.on("draft", function(data, user_id, callback) {
 		leagues[socket.league].turn = leagues[socket.league].draftedList.length % Object.keys(leagues[socket.league].participants).length;
+		if (Object.keys(leagues[socket.league].participants).length != 4) {
+			callback(false, "incorrect number");
+		}
 		//check whether player is already drafted
-		if (leagues[socket.league].draftedList.indexOf(data) != -1) {
+		else if (leagues[socket.league].draftedList.indexOf(data) != -1) {
 			callback(false, "Player already drafted");
 		} else if (leagues[socket.league].playerList.indexOf(data) == -1) {
 			callback(false, "Player eithe drafted or does not exist");
 		}
 		//check whose turn to drafts
 		else if (Object.keys(leagues[socket.league].participants).indexOf(socket.nickname.toString()) !== leagues[socket.league].turn) {
-			console.log("here");
 			callback(false, "Another player is drafting");
 		} else {
 			callback(true);
@@ -897,6 +903,7 @@ function scrapeBatterData(url, callback) {
 			console.log(result);
 			let sql;
 			let bp;
+			let temp = [];
 			for (let i = 0; i < result.length; i++) {
 				bp = result[i];
 				//sql = `insert into batter (name, team, player_id, RBI, H, OBP, AVG) values ('${bp.Name}', '${bp.Team}', '${bp.Player_id}', '${bp.RBI}', '${bp.H}', '${bp.OBP}', '${bp.AVG}')`;
@@ -952,7 +959,9 @@ function scrapePitcherData(url, callback) {
 			let bp;
 			for (let i = 0; i < result.length; i++) {
 				bp = result[i];
-				//sql = `insert into pitcher (name, team, player_id, ERA, WHIP, W) values ('${bp.Name}', '${bp.Team}', '${bp.Player_id}', '${bp.ERA}', '${bp.WHIP}', '${bp.W}')`;
+				// sql = `insert into pitcher (name, team, player_id, ERA, WHIP, W) values ('${bp.Name}', '${bp.Team}', '${bp.Player_id}', '${bp.ERA}', '${
+				// 	bp.WHIP
+				// }', '${bp.W}')`;
 				sql = `update pitcher set ERA = ${bp.ERA}, WHIP = ${bp.WHIP}, W = ${bp.W} where player_id = '${bp.Player_id}'`;
 				db.query(sql, (err, result) => {
 					if (err) throw err;
