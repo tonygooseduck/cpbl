@@ -5,6 +5,7 @@ const async = require("async");
 const crypto = require("crypto");
 const schedule = require("node-schedule");
 const fs = require("fs");
+const path = require("path");
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -20,13 +21,13 @@ app.use(
 );
 app.use(bodyParser.json());
 
-// let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
-// let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
-// let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
-//let options = { key: privateKey, cert: certificate, ca: chain };
-//const server = require("https").Server(options, app);
+let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
+let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
+let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
+let options = { key: privateKey, cert: certificate, ca: chain };
+const server = require("https").Server(options, app);
 // attach the socket.io server
-const server = require("http").Server(app);
+//const server = require("http").Server(app);
 const io = require("socket.io")(server);
 //socket.io application
 let rooms = {};
@@ -37,7 +38,58 @@ let rooms = {};
 //         });
 //     }
 // }
-
+let autoScrapeBatter = schedule.scheduleJob("* 0 17 * * *", function(firedate) {
+	console.log("node-schedule-scrapebatter:" + firedate + "actual time:" + new Date());
+	async.parallel(
+		[
+			function(callback) {
+				scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=E02&gameno=01", callback);
+			},
+			function(callback) {
+				scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=L01&gameno=01", callback);
+			},
+			function(callback) {
+				scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=A02&gameno=01", callback);
+			},
+			function(callback) {
+				scrapeBatterData("http://www.cpbl.com.tw/web/team_playergrade.php?&team=B04&gameno=01", callback);
+			}
+		],
+		function(err, results) {
+			if (err) {
+				throw err;
+			} else {
+				console.log(results);
+			}
+		}
+	);
+});
+let autoScrapePitcher = schedule.scheduleJob("* 30 17 * * *", function(firedate) {
+	console.log("node-schedule-scrapepitcher:" + firedate + "actual time:" + new Date());
+	async.parallel(
+		[
+			function(callback) {
+				scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=E02&year=2019&grade=2&syear=2019", callback);
+			},
+			function(callback) {
+				scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=L01&year=2019&grade=2&syear=2019", callback);
+			},
+			function(callback) {
+				scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=A02&year=2019&grade=2&syear=2019", callback);
+			},
+			function(callback) {
+				scrapePitcherData("http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=B04&year=2019&grade=2&syear=2019", callback);
+			}
+		],
+		function(err, results) {
+			if (err) {
+				throw err;
+			} else {
+				console.log(results);
+			}
+		}
+	);
+});
 let j = schedule.scheduleJob("30 * * * * *", function(firedate) {
 	console.log("node-schedule:" + firedate + "actual time:" + new Date());
 	db.query(`select * from cpbl_game where date < ${Date.now()} and result is NULL`, function(error, results, fields) {
@@ -442,13 +494,13 @@ app.get("/getAllLeague", (req, res) => {
 	});
 });
 app.get("/", (req, res) => {
-	res.sendFile(__dirname + "/main.html");
+	res.sendFile(path.join(__dirname, "main.html"));
 });
 app.get("/login", (req, res) => {
-	res.sendFile(__dirname + "/user.html");
+	res.sendFile(path.join(__dirname, "user.html"));
 });
 app.get("/user/draft", (req, res) => {
-	res.sendFile(__dirname + "/index.html");
+	res.sendFile(path.join(__dirname, "index.html"));
 });
 
 app.get("/getplayerdata", (req, res) => {
@@ -532,10 +584,10 @@ app.post("/getUserSchedule", (req, res) => {
 	}
 });
 app.get("/user/mock-draft", (req, res) => {
-	res.sendFile(__dirname + "/mock-draft.html");
+	res.sendFile(path.join(__dirname, "mock-draft.html"));
 });
 app.get("/user/team", (req, res) => {
-	res.sendFile(__dirname + "/team.html");
+	res.sendFile(path.join(__dirname, "team.html"));
 });
 
 app.get("/profile", function(req, res) {
