@@ -21,13 +21,13 @@ app.use(
 );
 app.use(bodyParser.json());
 
-// let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
-// let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
-// let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
-// let options = { key: privateKey, cert: certificate, ca: chain };
-// const server = require("https").Server(options, app);
+let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
+let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
+let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
+let options = { key: privateKey, cert: certificate, ca: chain };
+const server = require("https").Server(options, app);
 // attach the socket.io server
-const server = require("http").Server(app);
+//const server = require("http").Server(app);
 const io = require("socket.io")(server);
 //socket.io application
 let rooms = {};
@@ -38,7 +38,7 @@ let rooms = {};
 //         });
 //     }
 // }
-let autoScrapeBatter = schedule.scheduleJob("* 0 17 * * *", function(firedate) {
+let autoScrapeBatter = schedule.scheduleJob("* 0 6 * * *", function(firedate) {
 	console.log("node-schedule-scrapebatter:" + firedate + "actual time:" + new Date());
 	async.parallel(
 		[
@@ -64,7 +64,7 @@ let autoScrapeBatter = schedule.scheduleJob("* 0 17 * * *", function(firedate) {
 		}
 	);
 });
-let autoScrapePitcher = schedule.scheduleJob("* 30 17 * * *", function(firedate) {
+let autoScrapePitcher = schedule.scheduleJob("* 30 5 * * *", function(firedate) {
 	console.log("node-schedule-scrapepitcher:" + firedate + "actual time:" + new Date());
 	async.parallel(
 		[
