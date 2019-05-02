@@ -21,13 +21,13 @@ app.use(
 );
 app.use(bodyParser.json());
 
-let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
-let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
-let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
-let options = { key: privateKey, cert: certificate, ca: chain };
-const server = require("https").Server(options, app);
+// let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
+// let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
+// let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
+// let options = { key: privateKey, cert: certificate, ca: chain };
+// const server = require("https").Server(options, app);
 // attach the socket.io server
-//const server = require("http").Server(app);
+const server = require("http").Server(app);
 const io = require("socket.io")(server);
 //socket.io application
 let rooms = {};
@@ -348,24 +348,29 @@ real.on("connection", function(socket) {
 	});
 	socket.on("joinLeague", function(data, user_id, user_name, callback) {
 		if (Object.keys(leagues).indexOf(data) != -1) {
-			callback(true, data);
-			//to-do deal avoid new player joining room after there are 4 players
+			//to-do avoid new player joining room after there are 4 players
 			// player_number < 4 OR user_id already in participants list
-			socket.join(data, () => {
-				console.log(socket.id);
-				socket.nickname = user_id;
-				socket.user_name = user_name;
-				socket.league = socket.rooms[data];
-				leagues[data].participants[socket.nickname] = socket.id;
-				socket.to(socket.league).emit("message", `${socket.user_name} joined the room!`);
-				console.log(Object.keys(leagues[socket.league].participants));
-			});
+			if (Object.keys(leagues[data].participants).length < 4 || Object.keys(leagues[data].participants).indexOf(user_id.toString()) != -1) {
+				callback(true, data);
+				socket.join(data, () => {
+					socket.nickname = user_id;
+					socket.user_name = user_name;
+					socket.league = socket.rooms[data];
+					leagues[data].participants[socket.nickname] = socket.id;
+					socket.to(socket.league).emit("message", `${socket.user_name} joined the room!`);
+					console.log(Object.keys(leagues[socket.league].participants));
+				});
+			} else {
+				callback(false, "league reached player limit");
+			}
+		} else {
+			//callback(false, "league does not exist, you can create it or join another league");
 		}
 	});
 	socket.on("draft", function(data, user_id, callback) {
 		leagues[socket.league].turn = leagues[socket.league].draftedList.length % Object.keys(leagues[socket.league].participants).length;
 		if (Object.keys(leagues[socket.league].participants).length != 4) {
-			callback(false, "incorrect number");
+			callback(false, "incorrect player number");
 		}
 		//check whether player is already drafted
 		else if (leagues[socket.league].draftedList.indexOf(data) != -1) {
@@ -382,7 +387,7 @@ real.on("connection", function(socket) {
 			pick[socket.nickname] = data;
 			leagues[socket.league].draftedList.push(pick);
 			leagues[socket.league].playerList.splice(leagues[socket.league].playerList.indexOf(data), 1);
-			socket.to(socket.league).emit("message", `${socket.user_name} drafted ${data}`);
+			real.in(socket.league).emit("message", `${socket.user_name} drafted ${data}`);
 			//real.emit('message', `${socket.nickname} drafted ${data}`);
 			if (leagues[socket.league].draftedList.length === Object.keys(leagues[socket.league].participants).length * 3) {
 				console.log(leagues[socket.league].draftedList);

@@ -141,14 +141,14 @@
 				});
 				joinForm.submit(function(event) {
 					event.preventDefault();
-					socket.emit("joinLeague", joinLeague.val(), user_id, user_name, function(data) {
+					socket.emit("joinLeague", joinLeague.val(), user_id, user_name, function(data, message) {
 						if (data) {
 							document.querySelector("#welcome").innerHTML = `Welcome to ${joinLeague.val()}`;
 							createForm.hide();
 							joinForm.hide();
 							draftForm.show();
 						} else {
-							alert("league does not exist");
+							alert(message);
 						}
 					});
 				});
