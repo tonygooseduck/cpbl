@@ -163,10 +163,10 @@
 					// 	}
 					// });
 				});
-				socket.on("output", function(data) {
+				socket.on("output", function(data, data2) {
 					let html =
 						"<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th scope='col'>Team</th><th scope='col'>RBI</th><th scope='col'>H</th><th scope='col'>OBP</th><th scope='col'>AVG</th></tr></thead><tbody>";
-					for (let i = 0; i < 82; i++) {
+					for (let i = 0; i < data.length; i++) {
 						html += "<tr>";
 						html += "<th scope='row'>" + data[i].name + "</th>";
 						html += "<td>" + data[i].team + "</td>";
@@ -182,20 +182,19 @@
 						.append(html);
 					let html2 =
 						"<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th>Team</th><th>ERA</th><th>WHIP</th><th>W</th></tr></thead><tbody>";
-					for (let i = 82; i < 142; i++) {
+					for (let i = 0; i < data2.length; i++) {
 						html2 += "<tr>";
-						html2 += "<th scope='row'>" + data[i].name + "</th>";
-						html2 += "<td>" + data[i].team + "</td>";
-						html2 += "<td>" + data[i].ERA + "</td>";
-						html2 += "<td>" + data[i].WHIP + "</td>";
-						html2 += "<td>" + data[i].W + "</td>";
+						html2 += "<th scope='row'>" + data2[i].name + "</th>";
+						html2 += "<td>" + data2[i].team + "</td>";
+						html2 += "<td>" + data2[i].ERA + "</td>";
+						html2 += "<td>" + data2[i].WHIP + "</td>";
+						html2 += "<td>" + data2[i].W + "</td>";
 						html2 += "</tr>";
 					}
 					html2 += "</tbody></table>";
 					$("#pitchers")
 						.empty()
 						.append(html2);
-					draftForm.hide();
 				});
 
 				socket.on("nicknames", function(data) {

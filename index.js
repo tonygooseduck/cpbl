@@ -21,13 +21,13 @@ app.use(
 );
 app.use(bodyParser.json());
 
-let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
-let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
-let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
-let options = { key: privateKey, cert: certificate, ca: chain };
-const server = require("https").Server(options, app);
+// let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
+// let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
+// let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
+// let options = { key: privateKey, cert: certificate, ca: chain };
+//const server = require("https").Server(options, app);
 // attach the socket.io server
-//const server = require("http").Server(app);
+const server = require("http").Server(app);
 const io = require("socket.io")(server);
 //socket.io application
 let rooms = {};
@@ -38,6 +38,8 @@ let rooms = {};
 //         });
 //     }
 // }
+
+// node-schedule for scrapping batter and pitcher data
 let autoScrapeBatter = schedule.scheduleJob("0 25 2 * * *", function(firedate) {
 	console.log("node-schedule-scrapebatter:" + firedate + "actual time:" + new Date());
 	async.parallel(
@@ -90,6 +92,7 @@ let autoScrapePitcher = schedule.scheduleJob("0 27 2 * * *", function(firedate) 
 		}
 	);
 });
+// node-schedule for autoplaying scheduled games
 // let j = schedule.scheduleJob("* * * * * *", function(firedate) {
 // 	console.log("node-schedule:" + firedate + "actual time:" + new Date());
 // 	db.query(`select * from cpbl_game where date < ${Date.now()} and result is NULL`, function(error, results, fields) {
@@ -293,8 +296,8 @@ real.on("connection", function(socket) {
 	//console.log(`user ${socket.counter} connected`);
 	console.log(`${socket.id} connected`);
 	// get player full stats
-	getPlayerData("player", function(result) {
-		socket.emit("output", result);
+	getPlayerData("player", function(result1, result2) {
+		socket.emit("output", result1, result2);
 	});
 	// setinterval event on client side to avoid ping timeout
 	socket.on("abc", function(data) {});
@@ -1097,7 +1100,8 @@ function scrapePitcherData(url, callback) {
 }
 
 function getPlayerData(player, callback) {
-	let playerList = [];
+	let batterList = [];
+	let pitcherList = [];
 	db.query("select * from batter", (err, result) => {
 		if (err) throw err;
 		else {
@@ -1111,7 +1115,7 @@ function getPlayerData(player, callback) {
 				batter.H = result[i].H;
 				batter.OBP = result[i].OBP;
 				batter.AVG = result[i].AVG;
-				playerList.push(batter);
+				batterList.push(batter);
 			}
 			db.query("select * from pitcher", (err, result) => {
 				if (err) throw err;
@@ -1125,10 +1129,10 @@ function getPlayerData(player, callback) {
 						pitcher.ERA = result[i].ERA;
 						pitcher.WHIP = result[i].WHIP;
 						pitcher.W = result[i].W;
-						playerList.push(pitcher);
+						pitcherList.push(pitcher);
 					}
 				}
-				callback(playerList);
+				callback(batterList, pitcherList);
 			});
 		}
 	});
