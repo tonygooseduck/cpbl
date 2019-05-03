@@ -38,7 +38,7 @@ let rooms = {};
 //         });
 //     }
 // }
-let autoScrapeBatter = schedule.scheduleJob("* 0 6 * * *", function(firedate) {
+let autoScrapeBatter = schedule.scheduleJob("0 25 2 * * *", function(firedate) {
 	console.log("node-schedule-scrapebatter:" + firedate + "actual time:" + new Date());
 	async.parallel(
 		[
@@ -59,12 +59,12 @@ let autoScrapeBatter = schedule.scheduleJob("* 0 6 * * *", function(firedate) {
 			if (err) {
 				throw err;
 			} else {
-				console.log(results);
+				console.log("batter scraping completed");
 			}
 		}
 	);
 });
-let autoScrapePitcher = schedule.scheduleJob("* 30 5 * * *", function(firedate) {
+let autoScrapePitcher = schedule.scheduleJob("0 27 2 * * *", function(firedate) {
 	console.log("node-schedule-scrapepitcher:" + firedate + "actual time:" + new Date());
 	async.parallel(
 		[
@@ -85,33 +85,27 @@ let autoScrapePitcher = schedule.scheduleJob("* 30 5 * * *", function(firedate) 
 			if (err) {
 				throw err;
 			} else {
-				console.log(results);
+				console.log("pitcher scraping completed");
 			}
 		}
 	);
 });
-let j = schedule.scheduleJob("30 * * * * *", function(firedate) {
-	console.log("node-schedule:" + firedate + "actual time:" + new Date());
-	db.query(`select * from cpbl_game where date < ${Date.now()} and result is NULL`, function(error, results, fields) {
-		if (error) {
-			throw error;
-		}
-		for (let i = 0; i < results.length; i++) {
-			let temp = shuffle(["W", "L"]);
-			db.query(`update cpbl_game set result = '${temp[0]}' where id = '${results[i].id}'`, function(error, results, fields) {
-				if (error) {
-					throw error;
-				}
-			});
-		}
-		console.log("update complete");
-	});
-	// db.query(`insert into cpbl_schedule (date) values (${Date.now() + 15 * 60 * 1000})`, function(error, results, fields) {
-	// 	if (error) {
-	// 		throw error;
-	// 	}
-	// });
-});
+// let j = schedule.scheduleJob("* * * * * *", function(firedate) {
+// 	console.log("node-schedule:" + firedate + "actual time:" + new Date());
+// 	db.query(`select * from cpbl_game where date < ${Date.now()} and result is NULL`, function(error, results, fields) {
+// 		if (error) {
+// 			throw error;
+// 		}
+// 		for (let i = 0; i < results.length; i++) {
+// 			autoPlay(results[i].id, results[i].league_id, results[i].home_user_id, results[i].away_user_id);
+// 		}
+// 	});
+// db.query(`insert into cpbl_schedule (date) values (${Date.now() + 15 * 60 * 1000})`, function(error, results, fields) {
+// 	if (error) {
+// 		throw error;
+// 	}
+// });
+//});
 
 const mock = io.of("mock-draft");
 mock.on("connection", function(socket) {
@@ -957,7 +951,7 @@ function scrapeBatterData(url, callback) {
 			return Batter;
 		})
 		.then(function(result) {
-			console.log(result);
+			//console.log(result);
 			let sql;
 			async.eachLimit(
 				result,
@@ -995,7 +989,7 @@ function scrapeBatterData(url, callback) {
 							}
 						],
 						function(err, result) {
-							//console.log(result);
+							console.log(result);
 							callback();
 						}
 					);
@@ -1004,9 +998,9 @@ function scrapeBatterData(url, callback) {
 					if (err) {
 						console.log(err.message);
 					}
+					callback(null, result);
 				}
 			);
-			callback(null, result);
 		})
 		.catch(function(err) {
 			console.log(err);
@@ -1047,7 +1041,7 @@ function scrapePitcherData(url, callback) {
 			return Pitcher;
 		})
 		.then(function(result) {
-			console.log(result);
+			//console.log(result);
 			let sql;
 			async.eachLimit(
 				result,
@@ -1093,9 +1087,9 @@ function scrapePitcherData(url, callback) {
 					if (err) {
 						console.log(err.message);
 					}
+					callback(null, result);
 				}
 			);
-			callback(null, result);
 		})
 		.catch(function(err) {
 			console.log(err);
@@ -1180,5 +1174,119 @@ function shuffle(array) {
 
 	return array;
 }
-
+function autoPlay(id, league_id, user1, user2) {
+	async.parallel(
+		[
+			function(callback) {
+				db.query(
+					`select AVG(RBI), AVG(H), AVG(OBP), AVG(AVG) from cpbl_draft join batter on player_name = batter.name where user_id = ${user1} and league_id = ${league_id}`,
+					(err, results) => {
+						if (err) {
+							throw err;
+						}
+						callback(null, results[0]["AVG(RBI)"], results[0]["AVG(H)"], results[0]["AVG(OBP)"], results[0]["AVG(AVG)"]);
+					}
+				);
+			},
+			function(callback) {
+				db.query(
+					`select AVG(ERA), AVG(WHIP), AVG(W) from cpbl_draft join pitcher on player_name = pitcher.name where user_id = ${user1} and league_id = ${league_id}`,
+					(err, results) => {
+						if (err) {
+							throw err;
+						}
+						callback(null, [results[0]["AVG(ERA)"], results[0]["AVG(WHIP)"], results[0]["AVG(W)"]]);
+					}
+				);
+			},
+			function(callback) {
+				db.query(
+					`select AVG(RBI), AVG(H), AVG(OBP), AVG(AVG) from cpbl_draft join batter on player_name = batter.name where user_id = ${user2} and league_id = ${league_id}`,
+					(err, results) => {
+						if (err) {
+							throw err;
+						}
+						callback(null, results[0]["AVG(RBI)"], results[0]["AVG(H)"], results[0]["AVG(OBP)"], results[0]["AVG(AVG)"]);
+					}
+				);
+			},
+			function(callback) {
+				db.query(
+					`select AVG(ERA), AVG(WHIP), AVG(W) from cpbl_draft join pitcher on player_name = pitcher.name where user_id = ${user2} and league_id = ${league_id}`,
+					(err, results) => {
+						if (err) {
+							throw err;
+						}
+						callback(null, [results[0]["AVG(ERA)"], results[0]["AVG(WHIP)"], results[0]["AVG(W)"]]);
+					}
+				);
+			}
+		],
+		function(err, results) {
+			if (err) {
+				throw err;
+			}
+			let count = 0;
+			//compare batter data
+			for (let i = 0; i < 4; i++) {
+				if (results[0][i] == null && results[2][i] == null) {
+					break;
+				}
+				if (results[0][i] == null) {
+					count--;
+					break;
+				}
+				if (results[2][i] == null) {
+					count++;
+					break;
+				}
+				if (results[0][i] > results[2][i]) {
+					count++;
+				} else {
+					count--;
+				}
+			}
+			//compare pitcher data
+			for (let j = 0; j < 2; j++) {
+				if (results[1][j] == null && results[3][j] == null) {
+					break;
+				}
+				if (results[1][j] == null) {
+					count--;
+					break;
+				}
+				if (results[3][j] == null) {
+					count++;
+					break;
+				}
+				if (results[1][j] < results[3][j]) {
+					count++;
+				} else {
+					count--;
+				}
+			}
+			if (results[1][2] > results[3][2]) {
+				count++;
+			} else {
+				coutn--;
+			}
+			console.log(count);
+			if (count > 0) {
+				//user1 wins
+				db.query(`update cpbl_game set result = '${user1}' where id = '${id}'`, function(error, results, fields) {
+					if (error) {
+						throw error;
+					}
+				});
+			} else {
+				//user2 wins
+				db.query(`update cpbl_game set result = '${user2}' where id = '${id}'`, function(error, results, fields) {
+					if (error) {
+						throw error;
+					}
+				});
+			}
+		}
+	);
+}
 server.listen(443, () => console.log("server running on port 80"));
