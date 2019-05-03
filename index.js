@@ -21,13 +21,13 @@ app.use(
 );
 app.use(bodyParser.json());
 
-// let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
-// let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
-// let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
-// let options = { key: privateKey, cert: certificate, ca: chain };
-//const server = require("https").Server(options, app);
+let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
+let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
+let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
+let options = { key: privateKey, cert: certificate, ca: chain };
+const server = require("https").Server(options, app);
 // attach the socket.io server
-const server = require("http").Server(app);
+//const server = require("http").Server(app);
 const io = require("socket.io")(server);
 //socket.io application
 let rooms = {};
@@ -669,7 +669,53 @@ app.post("/remove/lineup", (req, res) => {
 		});
 	}
 });
-
+app.post("/ready/lineup", (req, res) => {
+	let data = req.body;
+	if (req.cookies.access_token) {
+		db.query("select * from cpbl_user where access_token = ?", [req.cookies.access_token], function(error, results, fields) {
+			if (error) {
+				throw error;
+			}
+			if (results.length === 0) {
+				res.send({ error: "Invalid access token, please log in" });
+				return;
+			}
+			let id = results[0].id;
+			db.query("select * from cpbl_draft where user_id = ? and league_id = ? and player_status = ?", [id, data.league, "Start"], function(
+				error,
+				results,
+				fields
+			) {
+				if (error) {
+					throw error;
+				}
+				if (results.length === 3) {
+					db.query("update cpbl_game set home_user_status = ? where home_user_id = ? and league_id = ?", ["Ready", id, data.league], function(
+						error,
+						results,
+						fields
+					) {
+						if (error) {
+							throw error;
+						}
+						db.query("update cpbl_game set away_user_status = ? where away_user_id = ? and league_id = ?", ["Ready", id, data.league], function(
+							error,
+							results,
+							fields
+						) {
+							if (error) {
+								throw error;
+							}
+							res.send({ result: "Success" });
+						});
+					});
+				} else {
+					res.send({ result: `${results.length} players in lineup, please modify to 3 then try again` });
+				}
+			});
+		});
+	}
+});
 app.post("/signup", (req, res) => {
 	let data = req.body;
 	if (!data.name || !data.email || !data.password) {
@@ -1178,6 +1224,7 @@ function shuffle(array) {
 
 	return array;
 }
+//to-do add where player_status = Start to query statement
 function autoPlay(id, league_id, user1, user2) {
 	async.parallel(
 		[
