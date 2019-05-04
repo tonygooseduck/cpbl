@@ -20,6 +20,7 @@ app.use(
 	})
 );
 app.use(bodyParser.json());
+app.use(express.static("public"));
 
 let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
 let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
@@ -483,7 +484,7 @@ app.use("/user/:id", function(req, res, next) {
 			next();
 		});
 	} else {
-		res.send("please log in first");
+		res.redirect("/");
 		//redirect to log in page
 	}
 });
@@ -564,18 +565,29 @@ app.post("/getUserSchedule", (req, res) => {
 			}
 			let id = results[0].id;
 			let results1;
+			let date = Date.now();
 			db.query(
-				`select date, result, home_user_id, away_user_id from cpbl_game where home_user_id = '${id}' and league_id = '${data.league}'`,
+				`select date, result, name, away_user_status from cpbl_game join cpbl_user on away_user_id = cpbl_user.id where home_user_id = '${id}' and league_id = '${
+					data.league
+				}'`,
 				function(error, results, fields) {
 					if (error) {
 						throw error;
 					}
+					for (let i = 0; i < results.length; i++) {
+						results[i].date = results[i].date - date;
+					}
 					results1 = results;
 					db.query(
-						`select date, result, home_user_id, away_user_id from cpbl_game where away_user_id = '${id}' and league_id = '${data.league}'`,
+						`select date, result, name, home_user_status from cpbl_game join cpbl_user on away_user_id = cpbl_user.id where away_user_id = '${id}' and league_id = '${
+							data.league
+						}'`,
 						function(error, results, fields) {
 							if (error) {
 								throw error;
+							}
+							for (let i = 0; i < results.length; i++) {
+								results[i].date = results[i].date - date;
 							}
 							res.send(results1.concat(results));
 						}
