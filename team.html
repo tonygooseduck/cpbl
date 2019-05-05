@@ -90,6 +90,7 @@
 				xhttp2.onreadystatechange = function() {
 					if (this.readyState == 4 && this.status == 200) {
 						let data = JSON.parse(this.responseText);
+						alert(data);
 						html2 +=
 							"<table class='table'><thead><tr><th scope='col'>Date</th><th>Opponent</th><th>Opponent Status</th><th>Result</th></tr></thead><tbody>";
 						for (let i = 0; i < data.length; i++) {
@@ -99,10 +100,11 @@
 							html2 += "<td>" + data[i].name + "</td>";
 							if (data[i].away_user_status) {
 								html2 += "<td>" + data[i].away_user_status + "</td>";
+								html2 += "<td>" + data[i].home_user_result + "</td>";
 							} else {
 								html2 += "<td>" + data[i].home_user_status + "</td>";
+								html2 += "<td>" + data[i].away_user_result + "</td>";
 							}
-							html2 += "<td>" + data[i].result + "</td>";
 							html2 += "</tr>";
 						}
 						html2 += "</tbody></table>";

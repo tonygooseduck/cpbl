@@ -22,13 +22,13 @@ app.use(
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
-let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
-let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
-let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
-let options = { key: privateKey, cert: certificate, ca: chain };
-const server = require("https").Server(options, app);
+// let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
+// let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
+// let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
+// let options = { key: privateKey, cert: certificate, ca: chain };
+//const server = require("https").Server(options, app);
 // attach the socket.io server
-//const server = require("http").Server(app);
+const server = require("http").Server(app);
 const io = require("socket.io")(server);
 //socket.io application
 let rooms = {};
@@ -94,22 +94,25 @@ let autoScrapePitcher = schedule.scheduleJob("0 27 2 * * *", function(firedate) 
 	);
 });
 // node-schedule for autoplaying scheduled games
-// let j = schedule.scheduleJob("* * * * * *", function(firedate) {
-// 	console.log("node-schedule:" + firedate + "actual time:" + new Date());
-// 	db.query(`select * from cpbl_game where date < ${Date.now()} and result is NULL`, function(error, results, fields) {
-// 		if (error) {
-// 			throw error;
-// 		}
-// 		for (let i = 0; i < results.length; i++) {
-// 			autoPlay(results[i].id, results[i].league_id, results[i].home_user_id, results[i].away_user_id);
-// 		}
-// 	});
-// db.query(`insert into cpbl_schedule (date) values (${Date.now() + 15 * 60 * 1000})`, function(error, results, fields) {
-// 	if (error) {
-// 		throw error;
-// 	}
-// });
-//});
+let j = schedule.scheduleJob("30 37 * * * *", function(firedate) {
+	console.log("node-schedule:" + firedate + "actual time:" + new Date());
+	db.query(
+		`select * from cpbl_game where date < ${Date.now()} and result is NULL and home_user_status = 'Ready' and away_user_status = 'Ready'`,
+		function(error, results, fields) {
+			if (error) {
+				throw error;
+			}
+			for (let i = 0; i < results.length; i++) {
+				autoPlay(results[i].id, results[i].league_id, results[i].home_user_id, results[i].away_user_id);
+			}
+		}
+	);
+	// db.query(`insert into cpbl_schedule (date) values (${Date.now() + 15 * 60 * 1000})`, function(error, results, fields) {
+	// 	if (error) {
+	// 		throw error;
+	// 	}
+	// });
+});
 
 const mock = io.of("mock-draft");
 mock.on("connection", function(socket) {
@@ -567,7 +570,7 @@ app.post("/getUserSchedule", (req, res) => {
 			let results1;
 			let date = Date.now();
 			db.query(
-				`select date, result, name, away_user_status from cpbl_game join cpbl_user on away_user_id = cpbl_user.id where home_user_id = '${id}' and league_id = '${
+				`select date, result, name, away_user_status, home_user_result from cpbl_game join cpbl_user on away_user_id = cpbl_user.id where home_user_id = '${id}' and league_id = '${
 					data.league
 				}'`,
 				function(error, results, fields) {
@@ -579,7 +582,7 @@ app.post("/getUserSchedule", (req, res) => {
 					}
 					results1 = results;
 					db.query(
-						`select date, result, name, home_user_status from cpbl_game join cpbl_user on away_user_id = cpbl_user.id where away_user_id = '${id}' and league_id = '${
+						`select date, result, name, home_user_status, away_user_result from cpbl_game join cpbl_user on home_user_id = cpbl_user.id where away_user_id = '${id}' and league_id = '${
 							data.league
 						}'`,
 						function(error, results, fields) {
@@ -1331,19 +1334,27 @@ function autoPlay(id, league_id, user1, user2) {
 			if (results[1][2] > results[3][2]) {
 				count++;
 			} else {
-				coutn--;
+				count--;
 			}
 			console.log(count);
 			if (count > 0) {
 				//user1 wins
-				db.query(`update cpbl_game set result = '${user1}' where id = '${id}'`, function(error, results, fields) {
+				db.query(`update cpbl_game set home_user_result = 'Win', away_user_result = 'Lose', result = 'Done' where id = '${id}'`, function(
+					error,
+					results,
+					fields
+				) {
 					if (error) {
 						throw error;
 					}
 				});
 			} else {
 				//user2 wins
-				db.query(`update cpbl_game set result = '${user2}' where id = '${id}'`, function(error, results, fields) {
+				db.query(`update cpbl_game set home_user_result = 'Lose', away_user_result = 'Win', result = 'Done' where id = '${id}'`, function(
+					error,
+					results,
+					fields
+				) {
 					if (error) {
 						throw error;
 					}
