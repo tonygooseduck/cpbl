@@ -367,7 +367,10 @@ real.on("connection", function(socket) {
 						leagues[data].order = shuffle(leagues[data].order);
 						real
 							.in(socket.league)
-							.emit("message", `draft order: ${(leagues[data].order[0], leagues[data].order[1], leagues[data].order[2], leagues[data].order[3])}`);
+							.emit(
+								"message",
+								`draft order: ${leagues[data].order[0]}, ${leagues[data].order[1]}, ${leagues[data].order[2]}, ${leagues[data].order[3]}`
+							);
 					}
 				});
 			} else {
