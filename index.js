@@ -360,6 +360,9 @@ real.on("connection", function(socket) {
 					leagues[data].participants[socket.nickname] = socket.id;
 					socket.to(socket.league).emit("message", `${socket.user_name} joined the room!`);
 					console.log(Object.keys(leagues[socket.league].participants));
+					if (Object.keys(leagues[socket.league].participants).length == 4) {
+						real.in(socket.league).emit("message", `draft order: ${Object.keys(leagues[socket.league].participants)}`);
+					}
 				});
 			} else {
 				callback(false, "league reached player limit");
@@ -371,7 +374,7 @@ real.on("connection", function(socket) {
 	socket.on("draft", function(data, user_id, callback) {
 		leagues[socket.league].turn = leagues[socket.league].draftedList.length % Object.keys(leagues[socket.league].participants).length;
 		if (Object.keys(leagues[socket.league].participants).length != 4) {
-			callback(false, "incorrect player number");
+			callback(false, "draft can only begin when there are 4 players");
 		}
 		//check whether player is already drafted
 		else if (leagues[socket.league].draftedList.indexOf(data) != -1) {
