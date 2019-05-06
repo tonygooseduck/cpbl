@@ -430,7 +430,7 @@ real.on("connection", function(socket) {
 							//console.log(leagues[socket.league].draftedList[i]);
 							cpblUserId = parseInt(Object.keys(leagues[socket.league].draftedList[i]));
 							playerName = Object.values(leagues[socket.league].draftedList[i]);
-							query = `insert into cpbl_draft (user_id, player_name, league_id, player_status) values ('${cpblUserId}', '${playerName}', '${league_id}', 'W')`;
+							query = `insert into cpbl_draft (user_id, player_name, league_id, player_status) values ('${cpblUserId}', '${playerName}', '${league_id}', 'Bench')`;
 							db.query(query, function(error, results, fields) {
 								if (error) {
 									db.rollback(function() {
@@ -455,10 +455,10 @@ real.on("connection", function(socket) {
 							for (let i = 0; i < temp.length; i++) {
 								participants = shuffle(participants);
 								db.query(
-									`insert into cpbl_game (league_id, date, home_user_id, away_user_id) values ('${league_id}','${temp[i].date}', '${
-										participants[0]
-									}', '${participants[1]}')
-								, ('${league_id}','${temp[i].date}', '${participants[2]}', '${participants[3]}')`,
+									`insert into cpbl_game (league_id, date, home_user_id, away_user_id, home_user_status, away_user_status, home_user_result, away_user_result) values ('${league_id}','${
+										temp[i].date
+									}', '${participants[0]}', '${participants[1]}', 'Unready', 'Unready', 'TBD', 'TBD')
+								, ('${league_id}','${temp[i].date}', '${participants[2]}', '${participants[3]}', 'Unready', 'Unready', 'TBD', 'TBD')`,
 									function(error, results, fields) {
 										if (error) {
 											db.rollback(function() {
