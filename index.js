@@ -870,7 +870,7 @@ app.post("/signin", (req, res) => {
 					// 		}
 					// 	}
 					// });
-					res.redirect("/");
+					res.redirect("/user/draft");
 				}
 			};
 			if (results.length == 0) {
