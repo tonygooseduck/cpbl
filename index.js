@@ -392,7 +392,7 @@ real.on("connection", function(socket) {
 			callback(false, "Player eithe drafted or does not exist");
 		}
 		//check whose turn to drafts
-		else if (leagues[data].order.indexOf(socket.user_name) !== leagues[socket.league].turn) {
+		else if (leagues[socket.league].order.indexOf(socket.user_name) !== leagues[socket.league].turn) {
 			callback(false, "Another player is drafting");
 		} else {
 			callback(true);
