@@ -13,19 +13,20 @@
 			crossorigin="anonymous"
 		/>
 		<title></title>
+		<link rel="stylesheet" type="text/css" href="/css/team.css" />
 	</head>
 	<body>
 		<nav class="navbar navbar-light bg-light">
-			<span class="navbar-brand mb-0 h1">CPBL Manager</span>
+			<span class="navbar-brand mb-0 h1"><a href="/">CPBL Manager</a></span>
 			<ul class="nav justify-content-end">
 				<li class="nav-item">
 					<a class="nav-link active" href="/login">Sign up & Sign in</a>
 				</li>
 				<li class="nav-item">
-					<a class="nav-link" href="/user/draft">Start drafting</a>
+					<a class="nav-link" href="/user/draft">Create & Join league</a>
 				</li>
 				<li class="nav-item">
-					<a class="nav-link" href="/user/team">My League</a>
+					<a class="nav-link" href="/user/team">My Leagues</a>
 				</li>
 			</ul>
 		</nav>
@@ -33,16 +34,18 @@
 			<div id="schedule" class="col"></div>
 			<div id="lineup" class="col">
 				<div id="team"></div>
-				<input type="text" id="league" />
-				<input type="button" value="Change league" id="changeLeague" />
+				<input type="text" id="league" placeholder="click numbers above" />
+				<input type="button" value="Show league" id="changeLeague" />
 				<div id="players"></div>
 				<div id="result"></div>
-				<input type="text" id="add" />
-				<input type="button" value="Add to lineup" id="addButton" />
-				<input type="text" id="remove" />
-				<input type="button" value="Remove from lineup" id="removeButton" />
-				<div>
-					<input type="button" value="Ready to play" id="readyButton" />
+				<div id="modify" style="display: none">
+					<input type="text" id="add" class="form-control-plaintext classname" placeholder="Click player to add" readonly />
+					<input type="button" value="Add to lineup" id="addButton" class="text-center" />
+					<input type="text" id="remove" class="form-control-plaintext classname" placeholder="Click player to remove" readonly />
+					<input type="button" value="Remove from lineup" id="removeButton" />
+					<div>
+						<button class="btn btn-lg btn-primary btn-block" id="readyButton" type="submit">Ready to play</button>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -68,6 +71,7 @@
 				xhttp = new XMLHttpRequest();
 				xhttp.onreadystatechange = function() {
 					if (this.readyState == 4 && this.status == 200) {
+						document.querySelector("#modify").style.display = "block";
 						let data = JSON.parse(this.responseText);
 						html += "<table class='table'><thead><tr><th scope='col'>Name</th><th>Status</th></tr></thead><tbody>";
 						for (let i = 0; i < data.length; i++) {
@@ -90,7 +94,6 @@
 				xhttp2.onreadystatechange = function() {
 					if (this.readyState == 4 && this.status == 200) {
 						let data = JSON.parse(this.responseText);
-						alert(data);
 						html2 +=
 							"<table class='table'><thead><tr><th scope='col'>Date</th><th>Opponent</th><th>Opponent Status</th><th>Result</th></tr></thead><tbody>";
 						for (let i = 0; i < data.length; i++) {
@@ -158,6 +161,27 @@
 				xhttp.send(JSON.stringify({ league: document.querySelector("#league").value }));
 			});
 		</script>
+		<script>
+			document.querySelector("body").addEventListener("click", event => {
+				if (event.target.parentElement.id == "team") {
+					console.log(event.target.parentElement.id);
+					document.querySelector("#league").value = event.target.innerHTML;
+				}
+			});
+			document.querySelector("body").addEventListener("click", event => {
+				if (event.target.parentElement.tagName === "TR" && event.target.parentElement.firstChild.innerHTML != "Name") {
+					console.log(event.target.parentElement.lastChild);
+					if (event.target.parentElement.lastChild.innerHTML == "Bench") {
+						document.querySelector("#remove").value = "";
+						document.querySelector("#add").value = event.target.parentElement.firstChild.innerHTML;
+					} else if (event.target.parentElement.lastChild.innerHTML == "Start") {
+						document.querySelector("#add").value = "";
+						document.querySelector("#remove").value = event.target.parentElement.firstChild.innerHTML;
+					}
+				}
+			});
+		</script>
+
 		<script
 			src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
 			integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"

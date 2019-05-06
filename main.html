@@ -13,6 +13,7 @@
 			crossorigin="anonymous"
 		/>
 		<title>cpbl manager</title>
+		<link rel="stylesheet" type="text/css" href="/css/main.css" />
 	</head>
 	<body class="text-center">
 		<div class="cover-container d-flex h-100 p-3 mx-auto flex-column">
@@ -23,34 +24,44 @@
 						<a class="nav-link active" href="/login">Sign up & Sign in</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="/user/draft">Start drafting</a>
+						<a class="nav-link" href="/user/draft">Create & Join league</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" href="/user/team">My League</a>
+						<a class="nav-link" href="/user/team">My Leagues</a>
 					</li>
 				</ul>
 			</nav>
-			<main role="main" class="inner cover">
+			<main role="main" class="inner cover" style="margin: 50px 0">
 				<h1 class="cover-heading">鍵盤GM - best cpbl general manager</h1>
 				<p class="lead">
 					A game based on CPBL that lets you choose players, build your own team and compete with friends or other players. Join now and prove what
 					you are made of !
 				</p>
 				<p class="lead">
-					<a href="#" class="btn btn-lg btn-secondary">Learn more</a>
+					<a href="#instructions" class="btn btn-lg btn-secondary">Learn more</a>
 				</p>
 			</main>
-			<div class="row">
-				<div class="col">
+			<div class="container">
+				<div class="content">
 					<h2>Who's playing</h2>
 					<div id="league"></div>
 				</div>
-				<div class="col">
-					<h2>What's special</h2>
+				<div class="content" id="instructions">
+					<h2>How to play</h2>
 					<ul>
-						<li><h3>Build your dream team</h3></li>
-						<li><h3>Play with friends</h3></li>
-						<li><h3>Find out who's the best GM!</h3></li>
+						<li style="margin-bottom: 50px">
+							<h3>Create league and invite your friends</h3>
+							<a href="/user/draft" class="btn btn-lg btn-secondary">Start now</a>
+						</li>
+						<li style="margin-bottom: 50px">
+							<h3>Participate in real time live drafting</h3>
+							<a href="/user/draft" class="btn btn-lg btn-secondary">Start now</a>
+						</li>
+						<li style="margin-bottom: 50px">
+							<h3>Manage your team and compete</h3>
+							<a href="/user/team" class="btn btn-lg btn-secondary">Manage your teams</a>
+						</li>
+						<li><h3>Decide who is the best GM !</h3></li>
 					</ul>
 				</div>
 			</div>

@@ -94,7 +94,7 @@ let autoScrapePitcher = schedule.scheduleJob("0 27 2 * * *", function(firedate) 
 	);
 });
 // node-schedule for autoplaying scheduled games
-let j = schedule.scheduleJob("30 37 * * * *", function(firedate) {
+let j = schedule.scheduleJob("30 30 7 * * *", function(firedate) {
 	console.log("node-schedule:" + firedate + "actual time:" + new Date());
 	db.query(
 		`select * from cpbl_game where date < ${Date.now()} and result is NULL and home_user_status = 'Ready' and away_user_status = 'Ready'`,
