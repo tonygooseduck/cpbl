@@ -334,6 +334,8 @@ real.on("connection", function(socket) {
 				socket.league = socket.rooms[data];
 				leagues[data] = {};
 				leagues[data].participants = {};
+				leagues[data].order = [];
+				leagues[data].order.push(user_name);
 				leagues[data].participants[socket.nickname] = socket.id;
 				getPlayerList("player", function(result) {
 					leagues[data].playerList = result;
@@ -358,10 +360,14 @@ real.on("connection", function(socket) {
 					socket.user_name = user_name;
 					socket.league = socket.rooms[data];
 					leagues[data].participants[socket.nickname] = socket.id;
+					leagues[data].order.push(user_name);
 					socket.to(socket.league).emit("message", `${socket.user_name} joined the room!`);
 					console.log(Object.keys(leagues[socket.league].participants));
 					if (Object.keys(leagues[socket.league].participants).length == 4) {
-						real.in(socket.league).emit("message", `draft order: ${Object.keys(leagues[socket.league].participants)}`);
+						leagues[data].order = shuffle(leagues[data].order);
+						real
+							.in(socket.league)
+							.emit("message", `draft order: ${(leagues[data].order[0], leagues[data].order[1], leagues[data].order[2], leagues[data].order[3])}`);
 					}
 				});
 			} else {
@@ -383,7 +389,7 @@ real.on("connection", function(socket) {
 			callback(false, "Player eithe drafted or does not exist");
 		}
 		//check whose turn to drafts
-		else if (Object.keys(leagues[socket.league].participants).indexOf(socket.nickname.toString()) !== leagues[socket.league].turn) {
+		else if (leagues[data].order.indexOf(socket.user_name) !== leagues[socket.league].turn) {
 			callback(false, "Another player is drafting");
 		} else {
 			callback(true);
