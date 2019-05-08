@@ -26,7 +26,7 @@ app.use(express.static("public"));
 const options = cert.options;
 const server = require("https").Server(options, app);
 
-//const server = require("http").Server(app);
+const server = require("http").Server(app);
 // attach the socket.io server
 const io = require("socket.io")(server);
 
