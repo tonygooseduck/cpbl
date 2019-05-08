@@ -62,7 +62,7 @@
 					document.querySelector("#team").innerHTML = html;
 				}
 			};
-			xhttp.open("GET", "/getUserTeam", true);
+			xhttp.open("GET", "/user/team", true);
 			xhttp.send();
 		</script>
 		<script>
@@ -85,7 +85,7 @@
 						document.querySelector("#players").innerHTML = html;
 					}
 				};
-				xhttp.open("POST", "/getUserPlayers");
+				xhttp.open("POST", "/user/draft");
 				xhttp.setRequestHeader("Content-Type", "application/json");
 				xhttp.send(JSON.stringify({ league: document.querySelector("#league").value }));
 				// schedule
@@ -114,7 +114,7 @@
 						document.querySelector("#schedule").innerHTML = html2;
 					}
 				};
-				xhttp2.open("POST", "/getUserSchedule");
+				xhttp2.open("POST", "/user/schedule");
 				xhttp2.setRequestHeader("Content-Type", "application/json");
 				xhttp2.send(JSON.stringify({ league: document.querySelector("#league").value }));
 			});

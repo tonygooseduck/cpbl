@@ -1,16 +1,17 @@
 const $ = require("cheerio");
 const rp = require("request-promise-native");
-//const cheerio = require('cheerio');
 const async = require("async");
 const crypto = require("crypto");
 const schedule = require("node-schedule");
 const fs = require("fs");
 const path = require("path");
+// MySQL Initialization
+const db = require("./db.js");
+const cert = require("./util/cert.js");
 
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
-const db = require("./db.js");
 const app = express();
 
 app.use(cookieParser());
@@ -22,23 +23,12 @@ app.use(
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
-let privateKey = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/privkey.pem", "utf8");
-let certificate = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/cert.pem", "utf8");
-let chain = fs.readFileSync("/etc/letsencrypt/live/www.tonygooseduck.com/chain.pem", "utf8");
-let options = { key: privateKey, cert: certificate, ca: chain };
+const options = cert.options;
 const server = require("https").Server(options, app);
-// attach the socket.io server
+
 //const server = require("http").Server(app);
+// attach the socket.io server
 const io = require("socket.io")(server);
-//socket.io application
-let rooms = {};
-// class playerList {
-//     constructor () {
-//         this.data = getPlayerList('player', function(result) {
-//             return result;
-//         });
-//     }
-// }
 
 // node-schedule for scrapping batter and pitcher data
 let autoScrapeBatter = schedule.scheduleJob("0 25 2 * * *", function(firedate) {
@@ -96,17 +86,14 @@ let autoScrapePitcher = schedule.scheduleJob("0 27 2 * * *", function(firedate) 
 // node-schedule for autoplaying scheduled games
 let j = schedule.scheduleJob("30 30 7 * * *", function(firedate) {
 	console.log("node-schedule:" + firedate + "actual time:" + new Date());
-	db.query(
-		`select * from cpbl_game where date < ${Date.now()} and result is NULL and home_user_status = 'Ready' and away_user_status = 'Ready'`,
-		function(error, results, fields) {
-			if (error) {
-				throw error;
-			}
-			for (let i = 0; i < results.length; i++) {
-				autoPlay(results[i].id, results[i].league_id, results[i].home_user_id, results[i].away_user_id);
-			}
+	db.query(`select * from cpbl_game where date < ${Date.now()} and result is NULL and home_user_status = 'Ready' and away_user_status = 'Ready'`, function(error, results, fields) {
+		if (error) {
+			throw error;
 		}
-	);
+		for (let i = 0; i < results.length; i++) {
+			autoPlay(results[i].id, results[i].league_id, results[i].home_user_id, results[i].away_user_id);
+		}
+	});
 	// db.query(`insert into cpbl_schedule (date) values (${Date.now() + 15 * 60 * 1000})`, function(error, results, fields) {
 	// 	if (error) {
 	// 		throw error;
@@ -114,21 +101,18 @@ let j = schedule.scheduleJob("30 30 7 * * *", function(firedate) {
 	// });
 });
 
+//socket.io application
+// global variable that includes all the rooms in namespace "mock-draft"
+let rooms = {};
 const mock = io.of("mock-draft");
 mock.on("connection", function(socket) {
-	//let temp;
-	//let draftedList = [];
-	//let draftPlayers = ["Faye", "David", "Jim"];
-	//let order;
-	//let rand;
-	//let count;
-	let a;
+	let playerList;
 	console.log(`${socket.id} connected`);
 	getPlayerData("player", function(result) {
 		socket.emit("output", result);
 	});
 	getPlayerList("player", function(result) {
-		a = JSON.stringify(result);
+		playerList = JSON.stringify(result);
 	});
 	socket.on("disconnect", function(reason) {
 		console.log(reason);
@@ -141,15 +125,13 @@ mock.on("connection", function(socket) {
 			socket.join(data, () => {
 				// get the room name and save it in socket.mock
 				socket.mock = socket.rooms[data];
-				// console.log(Object.keys(socket.rooms));
 				// create room in rooms
 				rooms[data] = {};
 				rooms[socket.mock].draftPlayers = ["AlphaGo", "AlphaStar", "OpenAI"];
-				rooms[socket.mock].playerList = JSON.parse(a);
+				rooms[socket.mock].playerList = JSON.parse(playerList);
 				rooms[socket.mock].draftedList = [];
 				rooms[socket.mock].temp = [];
 				rooms[socket.mock].turn;
-				console.log(Object.keys(rooms));
 			});
 		}
 	});
@@ -281,18 +263,8 @@ mock.on("connection", function(socket) {
 		console.log(rooms);
 	});
 });
+//global variable for all the leagues in namespace "real-draft"
 let leagues = {};
-// let leagues = {
-//    leagueName: {}
-// };
-// leagueName: {
-//     Invitation code:
-//     Participants:,
-//     PlayerList:
-//     DraftedList: {
-//         Participant: Player
-//     }
-// }
 const real = io.of("real-draft");
 real.on("connection", function(socket) {
 	//socket.counter = counter++;
@@ -365,12 +337,7 @@ real.on("connection", function(socket) {
 					console.log(Object.keys(leagues[socket.league].participants));
 					if (Object.keys(leagues[socket.league].participants).length == 4) {
 						leagues[data].order = shuffle(leagues[data].order);
-						real
-							.in(socket.league)
-							.emit(
-								"message",
-								`draft order: ${leagues[data].order[0]}, ${leagues[data].order[1]}, ${leagues[data].order[2]}, ${leagues[data].order[3]}`
-							);
+						real.in(socket.league).emit("message", `draft order: ${leagues[data].order[0]}, ${leagues[data].order[1]}, ${leagues[data].order[2]}, ${leagues[data].order[3]}`);
 					}
 				});
 			} else {
@@ -391,7 +358,7 @@ real.on("connection", function(socket) {
 		} else if (leagues[socket.league].playerList.indexOf(data) == -1) {
 			callback(false, "Player eithe drafted or does not exist");
 		}
-		//check whose turn to drafts
+		//check whose turn to draft
 		else if (leagues[socket.league].order.indexOf(socket.user_name) !== leagues[socket.league].turn) {
 			callback(false, "Another player is drafting");
 		} else {
@@ -401,7 +368,7 @@ real.on("connection", function(socket) {
 			leagues[socket.league].draftedList.push(pick);
 			leagues[socket.league].playerList.splice(leagues[socket.league].playerList.indexOf(data), 1);
 			real.in(socket.league).emit("message", `${socket.user_name} drafted ${data}`);
-			//real.emit('message', `${socket.nickname} drafted ${data}`);
+
 			if (leagues[socket.league].draftedList.length === Object.keys(leagues[socket.league].participants).length * 3) {
 				console.log(leagues[socket.league].draftedList);
 				//console.log(Object.entries(leagues[socket.league].draftedList));
@@ -455,9 +422,7 @@ real.on("connection", function(socket) {
 							for (let i = 0; i < temp.length; i++) {
 								participants = shuffle(participants);
 								db.query(
-									`insert into cpbl_game (league_id, date, home_user_id, away_user_id, home_user_status, away_user_status, home_user_result, away_user_result) values ('${league_id}','${
-										temp[i].date
-									}', '${participants[0]}', '${participants[1]}', 'Unready', 'Unready', 'TBD', 'TBD')
+									`insert into cpbl_game (league_id, date, home_user_id, away_user_id, home_user_status, away_user_status, home_user_result, away_user_result) values ('${league_id}','${temp[i].date}', '${participants[0]}', '${participants[1]}', 'Unready', 'Unready', 'TBD', 'TBD')
 								, ('${league_id}','${temp[i].date}', '${participants[2]}', '${participants[3]}', 'Unready', 'Unready', 'TBD', 'TBD')`,
 									function(error, results, fields) {
 										if (error) {
@@ -499,8 +464,8 @@ app.use("/user/:id", function(req, res, next) {
 			next();
 		});
 	} else {
+		//redirect to login page
 		res.redirect("/");
-		//redirect to log in page
 	}
 });
 app.get("/getAllLeague", (req, res) => {
@@ -526,7 +491,7 @@ app.get("/getplayerdata", (req, res) => {
 		res.send(result);
 	});
 });
-app.get("/getUserTeam", (req, res) => {
+app.get("/user/team", (req, res) => {
 	if (req.cookies.access_token) {
 		db.query("select * from cpbl_user where access_token = ?", [req.cookies.access_token], function(error, results, fields) {
 			if (error) {
@@ -546,7 +511,7 @@ app.get("/getUserTeam", (req, res) => {
 		});
 	}
 });
-app.post("/getUserPlayers", (req, res) => {
+app.post("/user/draft", (req, res) => {
 	let data = req.body;
 	if (req.cookies.access_token) {
 		db.query("select * from cpbl_user where access_token = ?", [req.cookies.access_token], function(error, results, fields) {
@@ -567,7 +532,7 @@ app.post("/getUserPlayers", (req, res) => {
 		});
 	}
 });
-app.post("/getUserSchedule", (req, res) => {
+app.post("/user/schedule", (req, res) => {
 	let data = req.body;
 	if (req.cookies.access_token) {
 		db.query("select * from cpbl_user where access_token = ?", [req.cookies.access_token], function(error, results, fields) {
@@ -581,34 +546,24 @@ app.post("/getUserSchedule", (req, res) => {
 			let id = results[0].id;
 			let results1;
 			let date = Date.now();
-			db.query(
-				`select date, result, name, away_user_status, home_user_result from cpbl_game join cpbl_user on away_user_id = cpbl_user.id where home_user_id = '${id}' and league_id = '${
-					data.league
-				}'`,
-				function(error, results, fields) {
+			db.query(`select date, result, name, away_user_status, home_user_result from cpbl_game join cpbl_user on away_user_id = cpbl_user.id where home_user_id = '${id}' and league_id = '${data.league}'`, function(error, results, fields) {
+				if (error) {
+					throw error;
+				}
+				for (let i = 0; i < results.length; i++) {
+					results[i].date = results[i].date - date;
+				}
+				results1 = results;
+				db.query(`select date, result, name, home_user_status, away_user_result from cpbl_game join cpbl_user on home_user_id = cpbl_user.id where away_user_id = '${id}' and league_id = '${data.league}'`, function(error, results, fields) {
 					if (error) {
 						throw error;
 					}
 					for (let i = 0; i < results.length; i++) {
 						results[i].date = results[i].date - date;
 					}
-					results1 = results;
-					db.query(
-						`select date, result, name, home_user_status, away_user_result from cpbl_game join cpbl_user on home_user_id = cpbl_user.id where away_user_id = '${id}' and league_id = '${
-							data.league
-						}'`,
-						function(error, results, fields) {
-							if (error) {
-								throw error;
-							}
-							for (let i = 0; i < results.length; i++) {
-								results[i].date = results[i].date - date;
-							}
-							res.send(results1.concat(results));
-						}
-					);
-				}
-			);
+					res.send(results1.concat(results));
+				});
+			});
 		});
 	}
 });
@@ -708,28 +663,16 @@ app.post("/ready/lineup", (req, res) => {
 				return;
 			}
 			let id = results[0].id;
-			db.query("select * from cpbl_draft where user_id = ? and league_id = ? and player_status = ?", [id, data.league, "Start"], function(
-				error,
-				results,
-				fields
-			) {
+			db.query("select * from cpbl_draft where user_id = ? and league_id = ? and player_status = ?", [id, data.league, "Start"], function(error, results, fields) {
 				if (error) {
 					throw error;
 				}
 				if (results.length === 3) {
-					db.query("update cpbl_game set home_user_status = ? where home_user_id = ? and league_id = ?", ["Ready", id, data.league], function(
-						error,
-						results,
-						fields
-					) {
+					db.query("update cpbl_game set home_user_status = ? where home_user_id = ? and league_id = ?", ["Ready", id, data.league], function(error, results, fields) {
 						if (error) {
 							throw error;
 						}
-						db.query("update cpbl_game set away_user_status = ? where away_user_id = ? and league_id = ?", ["Ready", id, data.league], function(
-							error,
-							results,
-							fields
-						) {
+						db.query("update cpbl_game set away_user_status = ? where away_user_id = ? and league_id = ?", ["Ready", id, data.league], function(error, results, fields) {
 							if (error) {
 								throw error;
 							}
@@ -953,45 +896,6 @@ app.get("/pitcher", (req, res) => {
 			res.send(results);
 		}
 	);
-	// const $ = cheerio.load(html);
-	// const playerData = [];
-	// $('tr td').each(function(i, element) {
-	//     playerData[i] = $(this).text();
-	// });
-	// playerData.join(', ');
-	// console.log(playerData);
-	// let test = $('td').map(function(i, element) {
-	//     return $(this).text();
-	// }).get().join(', ');
-	//console.log(test);
-
-	// scrape http://www.cpbl.com.tw/web/team_player.php?&team=E02 first
-	// let playerUrls = [];
-	// let list = $('td > a', html).length;
-	// for(let i = 0; i < list; i++){
-	//     playerUrls.push($('td > a', html)[i].attribs.href);
-	// }
-	// then scrape individual player's data
-	// return Promise.all(
-	//     playerUrls.map(function(url) {
-	//         return playerParse('http://www.cpbl.com.tw' + url);
-	//     })
-	// );
-	// user api
-
-	const playerParse = function(url) {
-		return rp(url)
-			.then(function(html) {
-				return {
-					name: $(".player_info_name", html)
-						.text()
-						.split(" ")[0]
-				};
-			})
-			.catch(function(err) {
-				console.log(err);
-			});
-	};
 });
 
 function scrapeBatterData(url, callback) {
@@ -1050,9 +954,7 @@ function scrapeBatterData(url, callback) {
 							},
 							function(affectedRows, bp, callback) {
 								if (affectedRows == 0) {
-									sql = `insert into batter (name, team, player_id, RBI, H, OBP, AVG) values ('${bp.Name}', '${bp.Team}', '${bp.Player_id}', '${
-										bp.RBI
-									}', '${bp.H}', '${bp.OBP}', '${bp.AVG}')`;
+									sql = `insert into batter (name, team, player_id, RBI, H, OBP, AVG) values ('${bp.Name}', '${bp.Team}', '${bp.Player_id}', '${bp.RBI}', '${bp.H}', '${bp.OBP}', '${bp.AVG}')`;
 									db.query(sql, (error, results) => {
 										if (error) {
 											throw error;
@@ -1139,9 +1041,7 @@ function scrapePitcherData(url, callback) {
 							},
 							function(affectedRows, bp, callback) {
 								if (affectedRows == 0) {
-									sql = `insert into pitcher (name, team, player_id, ERA, WHIP, W) values ('${bp.Name}', '${bp.Team}', '${bp.Player_id}', '${
-										bp.ERA
-									}', '${bp.WHIP}', '${bp.W}')`;
+									sql = `insert into pitcher (name, team, player_id, ERA, WHIP, W) values ('${bp.Name}', '${bp.Team}', '${bp.Player_id}', '${bp.ERA}', '${bp.WHIP}', '${bp.W}')`;
 									db.query(sql, (error, results) => {
 										if (error) {
 											throw error;
@@ -1256,48 +1156,36 @@ function autoPlay(id, league_id, user1, user2) {
 	async.parallel(
 		[
 			function(callback) {
-				db.query(
-					`select AVG(RBI), AVG(H), AVG(OBP), AVG(AVG) from cpbl_draft join batter on player_name = batter.name where user_id = ${user1} and league_id = ${league_id}`,
-					(err, results) => {
-						if (err) {
-							throw err;
-						}
-						callback(null, results[0]["AVG(RBI)"], results[0]["AVG(H)"], results[0]["AVG(OBP)"], results[0]["AVG(AVG)"]);
+				db.query(`select AVG(RBI), AVG(H), AVG(OBP), AVG(AVG) from cpbl_draft join batter on player_name = batter.name where user_id = ${user1} and league_id = ${league_id}`, (err, results) => {
+					if (err) {
+						throw err;
 					}
-				);
+					callback(null, results[0]["AVG(RBI)"], results[0]["AVG(H)"], results[0]["AVG(OBP)"], results[0]["AVG(AVG)"]);
+				});
 			},
 			function(callback) {
-				db.query(
-					`select AVG(ERA), AVG(WHIP), AVG(W) from cpbl_draft join pitcher on player_name = pitcher.name where user_id = ${user1} and league_id = ${league_id}`,
-					(err, results) => {
-						if (err) {
-							throw err;
-						}
-						callback(null, [results[0]["AVG(ERA)"], results[0]["AVG(WHIP)"], results[0]["AVG(W)"]]);
+				db.query(`select AVG(ERA), AVG(WHIP), AVG(W) from cpbl_draft join pitcher on player_name = pitcher.name where user_id = ${user1} and league_id = ${league_id}`, (err, results) => {
+					if (err) {
+						throw err;
 					}
-				);
+					callback(null, [results[0]["AVG(ERA)"], results[0]["AVG(WHIP)"], results[0]["AVG(W)"]]);
+				});
 			},
 			function(callback) {
-				db.query(
-					`select AVG(RBI), AVG(H), AVG(OBP), AVG(AVG) from cpbl_draft join batter on player_name = batter.name where user_id = ${user2} and league_id = ${league_id}`,
-					(err, results) => {
-						if (err) {
-							throw err;
-						}
-						callback(null, results[0]["AVG(RBI)"], results[0]["AVG(H)"], results[0]["AVG(OBP)"], results[0]["AVG(AVG)"]);
+				db.query(`select AVG(RBI), AVG(H), AVG(OBP), AVG(AVG) from cpbl_draft join batter on player_name = batter.name where user_id = ${user2} and league_id = ${league_id}`, (err, results) => {
+					if (err) {
+						throw err;
 					}
-				);
+					callback(null, results[0]["AVG(RBI)"], results[0]["AVG(H)"], results[0]["AVG(OBP)"], results[0]["AVG(AVG)"]);
+				});
 			},
 			function(callback) {
-				db.query(
-					`select AVG(ERA), AVG(WHIP), AVG(W) from cpbl_draft join pitcher on player_name = pitcher.name where user_id = ${user2} and league_id = ${league_id}`,
-					(err, results) => {
-						if (err) {
-							throw err;
-						}
-						callback(null, [results[0]["AVG(ERA)"], results[0]["AVG(WHIP)"], results[0]["AVG(W)"]]);
+				db.query(`select AVG(ERA), AVG(WHIP), AVG(W) from cpbl_draft join pitcher on player_name = pitcher.name where user_id = ${user2} and league_id = ${league_id}`, (err, results) => {
+					if (err) {
+						throw err;
 					}
-				);
+					callback(null, [results[0]["AVG(ERA)"], results[0]["AVG(WHIP)"], results[0]["AVG(W)"]]);
+				});
 			}
 		],
 		function(err, results) {
@@ -1351,22 +1239,14 @@ function autoPlay(id, league_id, user1, user2) {
 			console.log(count);
 			if (count > 0) {
 				//user1 wins
-				db.query(`update cpbl_game set home_user_result = 'Win', away_user_result = 'Lose', result = 'Done' where id = '${id}'`, function(
-					error,
-					results,
-					fields
-				) {
+				db.query(`update cpbl_game set home_user_result = 'Win', away_user_result = 'Lose', result = 'Done' where id = '${id}'`, function(error, results, fields) {
 					if (error) {
 						throw error;
 					}
 				});
 			} else {
 				//user2 wins
-				db.query(`update cpbl_game set home_user_result = 'Lose', away_user_result = 'Win', result = 'Done' where id = '${id}'`, function(
-					error,
-					results,
-					fields
-				) {
+				db.query(`update cpbl_game set home_user_result = 'Lose', away_user_result = 'Win', result = 'Done' where id = '${id}'`, function(error, results, fields) {
 					if (error) {
 						throw error;
 					}
