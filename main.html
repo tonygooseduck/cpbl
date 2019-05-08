@@ -32,22 +32,21 @@
 				</nav>
 			</div>
 			<main role="main" class="inner cover" style="margin: 50px 0">
-				<h1 class="cover-heading">職棒經理人 - best cpbl general manager</h1>
-				<p class="lead">
-					以中華職棒為舞台
-				</p>
-				<p class="lead">
-					最真實的球員數據
-				</p>
-				<p class="lead">
-					參與線上即時選秀
-				</p>
-				<p class="lead">
-					經營你的夢幻隊伍
-				</p>
-				<p class="lead">
-					<a href="#instructions" class="btn btn-lg btn-secondary">Learn more</a>
-				</p>
+				<div class="multiline">
+					<h1 class="cover-heading">職棒經理人</h1>
+					<h1>Best CPBL General Manager</h1>
+					<p class="lead">
+						以中華職棒為舞台，最真實的球員數據
+					</p>
+
+					<p class="lead">
+						參與線上即時選秀，經營你的夢幻隊伍
+					</p>
+
+					<p class="lead">
+						<a href="#instructions" class="btn btn-lg btn-secondary">Learn more</a>
+					</p>
+				</div>
 			</main>
 			<div class="main-image text-center">
 				<img src="/images/tim-gouw-124468-unsplash.jpg" class="rounded" />
@@ -112,7 +111,6 @@
 						html += "</tr>";
 					}
 					html += "</tbody></table>";
-					document.querySelector("#league").innerHTML = html;
 				}
 			};
 			xhttp.open("GET", "/getAllLeague");

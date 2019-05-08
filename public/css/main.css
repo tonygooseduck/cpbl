@@ -36,6 +36,31 @@ img {
 .content {
 	margin-top: 4rem;
 }
+.lead {
+	font-size: 3rem;
+	font-weight: 350;
+}
+.multiline {
+	color: white;
+	font-size: 50px;
+	display: block;
+	padding: 0.5rem;
+	border-radius: 40px;
+	opacity: 100;
+}
+.multiline h1 {
+	font-size: 5rem;
+	font-weight: 400;
+	margin-bottom: 2rem;
+}
+main {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	color: white;
+	width: 80%;
+}
 .inner
 /*
  * Header

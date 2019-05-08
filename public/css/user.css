@@ -32,3 +32,8 @@ button {
 div.col {
 	margin-top: 200px;
 }
+
+.logo {
+	max-height: 30px;
+	max-width: 30px;
+}

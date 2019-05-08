@@ -7,7 +7,7 @@ const fs = require("fs");
 const path = require("path");
 // MySQL Initialization
 const db = require("./db.js");
-const cert = require("./util/cert.js");
+//const cert = require("./util/cert.js");
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -23,10 +23,10 @@ app.use(
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
-const options = { key: cert.privateKey, cert: cert.certificate, ca: cert.chain };
-const server = require("https").Server(options, app);
+// const options = { key: cert.privateKey, cert: cert.certificate, ca: cert.chain };
+// const server = require("https").Server(options, app);
 
-//const server = require("http").Server(app);
+const server = require("http").Server(app);
 // attach the socket.io server
 const io = require("socket.io")(server);
 
@@ -813,7 +813,7 @@ app.post("/signin", (req, res) => {
 					// 		}
 					// 	}
 					// });
-					res.redirect("/user/draft");
+					res.send({ success: "log in succeeded" });
 				}
 			};
 			if (results.length == 0) {
