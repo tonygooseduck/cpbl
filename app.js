@@ -23,7 +23,7 @@ app.use(
 app.use(bodyParser.json());
 app.use(express.static("public"));
 
-const options = cert.options;
+const options = { key: cert.privateKey, cert: cert.certificate, ca: cert.chain };
 const server = require("https").Server(options, app);
 
 //const server = require("http").Server(app);
