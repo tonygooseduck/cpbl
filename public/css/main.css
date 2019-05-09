@@ -34,7 +34,7 @@ img {
 }
 
 .content {
-	margin-top: 4rem;
+	margin-top: 2rem;
 }
 .lead {
 	font-size: 3rem;
@@ -98,7 +98,7 @@ main {
 }
 .credit {
 	margin-top: 25px;
-	margin-bottom: 25px;
+	margin-bottom: 40px;
 }
 #author {
 }
@@ -118,4 +118,11 @@ main {
 	font-size: 2rem;
 	border-radius: 20px;
 	text-shadow: none;
+}
+
+.icon {
+	width: 25%;
+	height: 200px;
+	margin: auto;
+	margin-top: 50px;
 }
