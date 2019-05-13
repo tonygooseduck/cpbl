@@ -21,15 +21,17 @@ app.use(
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// const options = { key: cert.privateKey, cert: cert.certificate, ca: cert.chain };
-// const server = require('https').Server(options, app);
-
-const server = require('http').Server(app);
-// attach the socket.io server
-const io = require('socket.io')(server);
 // MySQL Initialization
 const db = require('./db.js');
-// const cert = require('./util/cert.js');
+const cert = require('./util/cert.js');
+
+const options = { key: cert.privateKey, cert: cert.certificate, ca: cert.chain };
+const server = require('https').Server(options, app);
+
+// const server = require('http').Server(app);
+// attach the socket.io server
+const io = require('socket.io')(server);
+
 const scrape = require('./util/scrape.js');
 const play = require('./util/play.js');
 
