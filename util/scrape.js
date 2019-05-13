@@ -8,7 +8,7 @@ function scrapeBatterData(url, callback) {
     .then(function (html) {
       let playerUrls = [];
       let list = $('td > a', html).length;
-      for (let i = 0; i < list / 2; i++) {
+      for (let i = 0; i < list / 2; i += 1) {
         let str = $('td > a', html)[i * 2].attribs.href.split('=');
         let temp = str[1].split('&');
         playerUrls.push(temp[0]);
@@ -19,7 +19,7 @@ function scrapeBatterData(url, callback) {
       });
       const Batter = [];
       let player;
-      // There are 31 columns for each player thus, number = playerData.length / 31
+      // There are 31 columns for each player, thus number = playerData.length / 31
       for (let i = 0; i < playerData.length / 31; i++) {
         player = {
           Name: playerData[i * 31],

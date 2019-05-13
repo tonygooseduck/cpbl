@@ -1,14 +1,11 @@
-const $ = require('cheerio');
-const rp = require('request-promise-native');
+// const $ = require('cheerio');
+// const rp = require('request-promise-native');
+// const fs = require('fs');
 const async = require('async');
 const crypto = require('crypto');
 const schedule = require('node-schedule');
-const fs = require('fs');
+
 const path = require('path');
-// MySQL Initialization
-const db = require('./db.js');
-// const cert = require('./util/cert.js');
-const scrape = require('./util/scrape.js');
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
@@ -30,6 +27,11 @@ app.use(express.static('public'));
 const server = require('http').Server(app);
 // attach the socket.io server
 const io = require('socket.io')(server);
+// MySQL Initialization
+const db = require('./db.js');
+// const cert = require('./util/cert.js');
+const scrape = require('./util/scrape.js');
+const play = require('./util/play.js');
 
 // node-schedule for scrapping batter and pitcher data
 schedule.scheduleJob('0 25 2 * * *', (firedate) => {
@@ -74,7 +76,7 @@ schedule.scheduleJob('0 27 2 * * *', (firedate) => {
       },
       function (callback) {
         scrape.pitcher('http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=B04&year=2019&grade=2&syear=2019', callback);
-      }
+      },
     ],
     function (err, results) {
       if (err) {
@@ -93,7 +95,7 @@ schedule.scheduleJob('30 30 7 * * *', (firedate) => {
       throw error;
     }
     for (let i = 0; i < results.length; i++) {
-      autoPlay(results[i].id, results[i].league_id, results[i].home_user_id, results[i].away_user_id);
+      play.autoPlay(results[i].id, results[i].league_id, results[i].home_user_id, results[i].away_user_id);
     }
   });
   // db.query(`insert into cpbl_schedule (date) values (${Date.now() + 15 * 60 * 1000})`, function(error, results, fields) {
@@ -139,7 +141,7 @@ mock.on('connection', function (socket) {
   });
   socket.on('start', function (data, callback) {
     rooms[socket.mock].draftPlayers.push('You');
-    rooms[socket.mock].draftPlayers = shuffle(rooms[socket.mock].draftPlayers);
+    rooms[socket.mock].draftPlayers = play.shuffle(rooms[socket.mock].draftPlayers);
     callback(true);
     rooms[socket.mock].order = rooms[socket.mock].draftPlayers.indexOf('You');
     socket.emit('messages', `You are player ${rooms[socket.mock].draftPlayers.indexOf('You') + 1}`);
@@ -338,7 +340,7 @@ real.on('connection', function (socket) {
           socket.to(socket.league).emit('message', `${socket.user_name} joined the room!`);
           console.log(Object.keys(leagues[socket.league].participants));
           if (Object.keys(leagues[socket.league].participants).length == 4) {
-            leagues[data].order = shuffle(leagues[data].order);
+            leagues[data].order = play.shuffle(leagues[data].order);
             real.in(socket.league).emit('message', `draft order: ${leagues[data].order[0]}, ${leagues[data].order[1]}, ${leagues[data].order[2]}, ${leagues[data].order[3]}`);
           }
         });
@@ -422,7 +424,7 @@ real.on('connection', function (socket) {
               }
               let temp = results;
               for (let i = 0; i < temp.length; i++) {
-                participants = shuffle(participants);
+                participants = play.shuffle(participants);
                 db.query(
                   `insert into cpbl_game (league_id, date, home_user_id, away_user_id, home_user_status, away_user_status, home_user_result, away_user_result) values ('${league_id}','${temp[i].date}', '${participants[0]}', '${participants[1]}', 'Unready', 'Unready', 'TBD', 'TBD')
 								, ('${league_id}','${temp[i].date}', '${participants[2]}', '${participants[3]}', 'Unready', 'Unready', 'TBD', 'TBD')`,
@@ -960,127 +962,4 @@ function getPlayerList(player, callback) {
   });
 }
 
-function shuffle(array) {
-  var currentIndex = array.length,
-    temporaryValue,
-    randomIndex;
-
-  // While there remain elements to shuffle...
-  while (0 !== currentIndex) {
-    // Pick a remaining element...
-    randomIndex = Math.floor(Math.random() * currentIndex);
-    currentIndex -= 1;
-
-    // And swap it with the current element.
-    temporaryValue = array[currentIndex];
-    array[currentIndex] = array[randomIndex];
-    array[randomIndex] = temporaryValue;
-  }
-
-  return array;
-}
-//to-do add where player_status = Start to query statement
-function autoPlay(id, league_id, user1, user2) {
-  async.parallel(
-    [
-      function (callback) {
-        db.query(`select AVG(RBI), AVG(H), AVG(OBP), AVG(AVG) from cpbl_draft join batter on player_name = batter.name where user_id = ${user1} and league_id = ${league_id}`, (err, results) => {
-          if (err) {
-            throw err;
-          }
-          callback(null, results[0]['AVG(RBI)'], results[0]['AVG(H)'], results[0]['AVG(OBP)'], results[0]['AVG(AVG)']);
-        });
-      },
-      function (callback) {
-        db.query(`select AVG(ERA), AVG(WHIP), AVG(W) from cpbl_draft join pitcher on player_name = pitcher.name where user_id = ${user1} and league_id = ${league_id}`, (err, results) => {
-          if (err) {
-            throw err;
-          }
-          callback(null, [results[0]['AVG(ERA)'], results[0]['AVG(WHIP)'], results[0]['AVG(W)']]);
-        });
-      },
-      function (callback) {
-        db.query(`select AVG(RBI), AVG(H), AVG(OBP), AVG(AVG) from cpbl_draft join batter on player_name = batter.name where user_id = ${user2} and league_id = ${league_id}`, (err, results) => {
-          if (err) {
-            throw err;
-          }
-          callback(null, results[0]['AVG(RBI)'], results[0]['AVG(H)'], results[0]['AVG(OBP)'], results[0]['AVG(AVG)']);
-        });
-      },
-      function (callback) {
-        db.query(`select AVG(ERA), AVG(WHIP), AVG(W) from cpbl_draft join pitcher on player_name = pitcher.name where user_id = ${user2} and league_id = ${league_id}`, (err, results) => {
-          if (err) {
-            throw err;
-          }
-          callback(null, [results[0]['AVG(ERA)'], results[0]['AVG(WHIP)'], results[0]['AVG(W)']]);
-        });
-      }
-    ],
-    function (err, results) {
-      if (err) {
-        throw err;
-      }
-      let count = 0;
-      //compare batter data
-      for (let i = 0; i < 4; i++) {
-        if (results[0][i] == null && results[2][i] == null) {
-          break;
-        }
-        if (results[0][i] == null) {
-          count--;
-          break;
-        }
-        if (results[2][i] == null) {
-          count++;
-          break;
-        }
-        if (results[0][i] > results[2][i]) {
-          count++;
-        } else {
-          count--;
-        }
-      }
-      //compare pitcher data
-      for (let j = 0; j < 2; j++) {
-        if (results[1][j] == null && results[3][j] == null) {
-          break;
-        }
-        if (results[1][j] == null) {
-          count--;
-          break;
-        }
-        if (results[3][j] == null) {
-          count++;
-          break;
-        }
-        if (results[1][j] < results[3][j]) {
-          count++;
-        } else {
-          count--;
-        }
-      }
-      if (results[1][2] > results[3][2]) {
-        count++;
-      } else {
-        count--;
-      }
-      console.log(count);
-      if (count > 0) {
-        //user1 wins
-        db.query(`update cpbl_game set home_user_result = 'Win', away_user_result = 'Lose', result = 'Done' where id = '${id}'`, function (error, results, fields) {
-          if (error) {
-            throw error;
-          }
-        });
-      } else {
-        //user2 wins
-        db.query(`update cpbl_game set home_user_result = 'Lose', away_user_result = 'Win', result = 'Done' where id = '${id}'`, function (error, results, fields) {
-          if (error) {
-            throw error;
-          }
-        });
-      }
-    }
-  );
-}
 server.listen(443, () => console.log('server running on port 80'));
