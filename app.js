@@ -78,41 +78,42 @@ schedule.scheduleJob('0 27 2 * * *', (firedate) => {
         scrape.pitcher('http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=B04&year=2019&grade=2&syear=2019', callback);
       },
     ],
-    function (err, results) {
+    (err, results) => {
       if (err) {
         throw err;
       } else {
+        console.log(results);
         console.log('pitcher scraping completed');
       }
-    }
+    },
   );
 });
 // node-schedule for autoplaying scheduled games
 schedule.scheduleJob('30 30 7 * * *', (firedate) => {
-  console.log('node-schedule:' + firedate + 'actual time:' + new Date());
-  db.query(`select * from cpbl_game where date < ${Date.now()} and result is NULL and home_user_status = 'Ready' and away_user_status = 'Ready'`, function (error, results, fields) {
+  console.log(`node-schedule-autoPlay:${firedate} actual time:${new Date()}`);
+  db.query(`select * from cpbl_game where date < ${Date.now()} and result is NULL and home_user_status = 'Ready' and away_user_status = 'Ready'`, (error, results) => {
     if (error) {
       throw error;
     }
-    for (let i = 0; i < results.length; i++) {
+    for (let i = 0; i < results.length; i += 1) {
       play.autoPlay(results[i].id, results[i].league_id, results[i].home_user_id, results[i].away_user_id);
     }
   });
   // db.query(`insert into cpbl_schedule (date) values (${Date.now() + 15 * 60 * 1000})`, function(error, results, fields) {
-  // 	if (error) {
-  // 		throw error;
-  // 	}
+  // if (error) {
+  // throw error;
+  // }
   // });
 });
 
-//socket.io application
+// socket.io application
 // global variable that includes all the rooms in namespace 'mock-draft'
 let rooms = {};
 const mock = io.of('mock-draft');
-mock.on('connection', function (socket) {
+mock.on('connection', (socket) => {
   let playerList;
   console.log(`${socket.id} connected`);
-  getPlayerData('player', function (result) {
+  getPlayerData('player', (result) => {
     socket.emit('output', result);
   });
   getPlayerList('player', function (result) {
@@ -122,7 +123,7 @@ mock.on('connection', function (socket) {
     console.log(reason);
   });
   socket.on('joinroom', function (data, callback) {
-    if (Object.keys(rooms).indexOf(data) != -1) {
+    if (Object.keys(rooms).indexOf(data) !== -1) {
       callback(true);
     } else {
       callback(false);
@@ -140,14 +141,15 @@ mock.on('connection', function (socket) {
     }
   });
   socket.on('start', function (data, callback) {
+    let rand;
     rooms[socket.mock].draftPlayers.push('You');
     rooms[socket.mock].draftPlayers = play.shuffle(rooms[socket.mock].draftPlayers);
     callback(true);
     rooms[socket.mock].order = rooms[socket.mock].draftPlayers.indexOf('You');
     socket.emit('messages', `You are player ${rooms[socket.mock].draftPlayers.indexOf('You') + 1}`);
-    // Random generate 4 choice, if one was taken , use the other three, if not takn , use the first three
+    // Random generate 4 choices
     rooms[socket.mock].count = rooms[socket.mock].playerList.length;
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 4; i += 1) {
       rand = Math.floor(Math.random() * rooms[socket.mock].count);
       rooms[socket.mock].temp.push(rooms[socket.mock].playerList[rand]);
       rooms[socket.mock].playerList.splice(rand, 1);
