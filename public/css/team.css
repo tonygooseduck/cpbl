@@ -17,3 +17,8 @@ button {
 	margin-top: 1em;
 	margin-bottom: 1em;
 }
+
+.logo {
+	max-height: 30px;
+	max-width: 30px;
+}

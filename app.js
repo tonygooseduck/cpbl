@@ -574,7 +574,7 @@ app.post('/user/schedule', (req, res) => {
 app.get('/user/mock-draft', (req, res) => {
   res.sendFile(path.join(__dirname, 'mock-draft.html'));
 });
-app.get('/user/team', (req, res) => {
+app.get('/user/league', (req, res) => {
   res.sendFile(path.join(__dirname, 'team.html'));
 });
 

@@ -1,266 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<!-- Required meta tags -->
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
-		<!-- Bootstrap CSS -->
-		<link
-			rel="stylesheet"
-			href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-			integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
-			crossorigin="anonymous"
-		/>
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
-		<title>cpbl draft</title>
-		<style type="text/css">
-			#messages {
-				padding: 0px;
-				list-style-type: none;
-			}
-			#messages li {
-				padding: 2px 0px;
-				border-bottom: 1px solid #ccc;
-			}
-			#message-box {
-			}
-			#draft-form {
-				display: none;
-			}
-			#nicknames {
-				width: 300px;
-				float: right;
-			}
-			#create-form {
-				border: 2px solid blueviolet;
-				padding: 20px;
-				margin-top: 20px;
-				margin-right: 20px;
-			}
-			#join-form {
-				border: 2px solid blueviolet;
-				padding: 20px;
-				margin-top: 20px;
-			}
-		</style>
-	</head>
-	<body>
-		<nav class="navbar navbar-light bg-light">
-			<span class="navbar-brand mb-0 h1"><a href="/">CPBL Manager</a></span>
-			<ul class="nav justify-content-end">
-				<li class="nav-item">
-					<a class="nav-link active" href="/login">Sign up & Sign in</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link" href="/user/draft">Create & Join league</a>
-				</li>
-				<li class="nav-item">
-					<a class="nav-link" href="/user/team">My Leagues</a>
-				</li>
-			</ul>
-		</nav>
-		<div class="container">
-			<h3>Welcome</h3>
-			<div id="welcome"></div>
-			<div>
-				<ul id="nicknames"></ul>
-			</div>
-			<h4>Create new league or join existed league</h4>
-			<div class="row">
-				<form id="create-form" class="col">
-					<div id="create-result"></div>
-					<label style="text-align: center" for="create">Create new league:</label>
-					<input type="text" id="create-name" class="form-control classname" placeholder="Enter league name" />
-					<input style="margin-top: 10px" type="submit" value="create" />
-				</form>
-				<form id="join-form" class="col">
-					<div id="join-result"></div>
-					<label for="join">Join:</label>
-					<input type="text" id="join" class="form-control classname" placeholder="Enter existed league name" />
-					<input style="margin-top: 10px" type="submit" value="join" />
-				</form>
-			</div>
-			<div class="row">
-				<form id="draft-form" class="col">
-					<label for="draft"></label>
-					<input class="form-control" type="text" placeholder="Click on player row to draft" id="draft" readonly style="margin-bottom: 0.5em" />
-					<input class="btn btn-lg btn-secondary" type="submit" style="margin-bottom: 0.5em" value="draft" />
-				</form>
-				<div id="message-box" class="col" style="display: none">
-					<ul id="messages"></ul>
-				</div>
-			</div>
-			<div id="players" class="row" style="display: none">
-				<div id="batters" class="col"></div>
-				<div id="pitchers" class="col"></div>
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+		integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+
+	<title>cpbl draft</title>
+	<style type="text/css">
+		#messages {
+			padding: 0px;
+			list-style-type: none;
+		}
+
+		#messages li {
+			padding: 2px 0px;
+			border-bottom: 1px solid #ccc;
+		}
+
+		#message-box {}
+
+		#draft-form {
+			display: none;
+		}
+
+		#nicknames {
+			width: 300px;
+			float: right;
+		}
+
+		#create-form {
+			border: 2px solid blueviolet;
+			padding: 20px;
+			margin-top: 20px;
+			margin-right: 20px;
+		}
+
+		#join-form {
+			border: 2px solid blueviolet;
+			padding: 20px;
+			margin-top: 20px;
+		}
+	</style>
+</head>
+
+<body>
+	<nav class="navbar navbar-light bg-light">
+		<span class="navbar-brand mb-0 h1"><a href="/">CPBL Manager</a></span>
+		<ul class="nav justify-content-end">
+			<li class="nav-item">
+				<a class="nav-link active" href="/login">Sign up & Sign in</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="/user/draft">Create & Join league</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="/user/league">My Leagues</a>
+			</li>
+		</ul>
+	</nav>
+	<div class="container">
+		<h3>Welcome</h3>
+		<div id="welcome"></div>
+		<div>
+			<ul id="nicknames"></ul>
+		</div>
+		<h4>Create new league or join existed league</h4>
+		<div class="row">
+			<form id="create-form" class="col">
+				<div id="create-result"></div>
+				<label style="text-align: center" for="create">Create new league:</label>
+				<input type="text" id="create-name" class="form-control classname" placeholder="Enter league name" />
+				<input style="margin-top: 10px" type="submit" value="create" />
+			</form>
+			<form id="join-form" class="col">
+				<div id="join-result"></div>
+				<label for="join">Join:</label>
+				<input type="text" id="join" class="form-control classname" placeholder="Enter existed league name" />
+				<input style="margin-top: 10px" type="submit" value="join" />
+			</form>
+		</div>
+		<div class="row">
+			<form id="draft-form" class="col">
+				<label for="draft"></label>
+				<input class="form-control" type="text" placeholder="Click on player row to draft" id="draft" readonly
+					style="margin-bottom: 0.5em" />
+				<input class="btn btn-lg btn-secondary" type="submit" style="margin-bottom: 0.5em" value="draft" />
+			</form>
+			<div id="message-box" class="col" style="display: none">
+				<ul id="messages"></ul>
 			</div>
 		</div>
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-		<script src="/socket.io/socket.io.js"></script>
-		<script>
-			let user_id;
-			let user_name;
-			let xhttp = new XMLHttpRequest();
-			xhttp.onreadystatechange = function() {
-				if (this.readyState == 4 && this.status == 200) {
-					let data = JSON.parse(this.responseText);
-					document.querySelector("#welcome").innerHTML = data.name;
-					user_id = data.id;
-					user_name = data.name;
-				}
-			};
-			xhttp.open("GET", "/profile", true);
-			xhttp.send();
+		<div id="players" class="row" style="display: none">
+			<div id="batters" class="col"></div>
+			<div id="pitchers" class="col"></div>
+		</div>
+	</div>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+		let user_id;
+		let user_name;
+		let xhttp = new XMLHttpRequest();
+		xhttp.onreadystatechange = function () {
+			if (this.readyState == 4 && this.status == 200) {
+				let data = JSON.parse(this.responseText);
+				document.querySelector("#welcome").innerHTML = data.name;
+				user_id = data.id;
+				user_name = data.name;
+			}
+		};
+		xhttp.open("GET", "/profile", true);
+		xhttp.send();
 
-			let socket = io("/real-draft", {
-				reconnection: false
-			});
-			socket.on("connect", function() {});
-			window.setInterval(function() {
-				socket.emit("abc", "alive");
-			}, 10000);
+		let socket = io("/real-draft", {
+			reconnection: false
+		});
+		socket.on("connect", function () { });
+		window.setInterval(function () {
+			socket.emit("abc", "alive");
+		}, 10000);
 
-			jQuery(function($) {
-				let draftPlayer = $("#draft");
-				let draftForm = $("#draft-form");
-				let joinLeague = $("#join");
-				let joinForm = $("#join-form");
-				let playersList = $("#players ul");
-				let createName = $("#create-name");
-				let createForm = $("#create-form");
-				let messageBox = $("#message-box");
+		jQuery(function ($) {
+			let draftPlayer = $("#draft");
+			let draftForm = $("#draft-form");
+			let joinLeague = $("#join");
+			let joinForm = $("#join-form");
+			let playersList = $("#players ul");
+			let createName = $("#create-name");
+			let createForm = $("#create-form");
+			let messageBox = $("#message-box");
 
-				draftForm.submit(function(event) {
-					event.preventDefault();
-					socket.emit("draft", draftPlayer.val(), user_id, function(data, message) {
-						if (data) {
-							alert("Player drafted successfully");
-							document.querySelector("#");
-						} else {
-							alert(message);
-						}
-					});
-				});
-				createForm.submit(function(event) {
-					event.preventDefault();
-					socket.emit("create", createName.val(), user_id, user_name, function(data, name) {
-						if (data) {
-							document.querySelector("#welcome").innerHTML = "<h3>League name: " + createName.val() + "</h3>";
-							createForm.hide();
-							joinForm.hide();
-							document.querySelector("#players").style.display = "flex";
-							document.querySelector("h3").style.display = "none";
-							document.querySelector("h4").style.display = "none";
-							draftForm.show();
-							messageBox.show();
-							//alert(name);
-						} else {
-							document.querySelector("#create-result").innerHTML = "<span class='badge badge-primary'> league already exist</span>";
-							//alert("league name already exist");
-						}
-					});
-				});
-				joinForm.submit(function(event) {
-					event.preventDefault();
-					socket.emit("joinLeague", joinLeague.val(), user_id, user_name, function(data, message) {
-						if (data) {
-							document.querySelector("#welcome").innerHTML = "<h3>League name: " + joinLeague.val() + "</h3>";
-							createForm.hide();
-							joinForm.hide();
-							document.querySelector("#players").style.display = "flex";
-							document.querySelector("h3").style.display = "none";
-							document.querySelector("h4").style.display = "none";
-							draftForm.show();
-							messageBox.show();
-						} else {
-							alert(message);
-						}
-					});
-				});
-				socket.on("disconnect", function() {
-					$("#messages").append("<li>Disconnected</li>");
-					$("#messages").append("<li>Please refresh and rejoin</li>");
-					window.location.reload(false);
-					//socket.connect();
-					// socket.emit("joinLeague", document.querySelector("#welcome").innerHTML, user_id, user_name, function(data) {
-					// 	if (data) {
-					// 		draftForms.show();
-					// 	}
-					// });
-				});
-				socket.on("output", function(data, data2) {
-					let html =
-						"<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th scope='col'>Team</th><th scope='col'>RBI</th><th scope='col'>H</th><th scope='col'>OBP</th><th scope='col'>AVG</th></tr></thead><tbody>";
-					for (let i = 0; i < data.length; i++) {
-						html += "<tr>";
-						html += "<th scope='row'>" + data[i].name + "</th>";
-						html += "<td>" + data[i].team + "</td>";
-						html += "<td>" + data[i].RBI + "</td>";
-						html += "<td>" + data[i].H + "</td>";
-						html += "<td>" + data[i].OBP + "</td>";
-						html += "<td>" + data[i].AVG + "</td>";
-						html += "</tr>";
+			draftForm.submit(function (event) {
+				event.preventDefault();
+				socket.emit("draft", draftPlayer.val(), user_id, function (data, message) {
+					if (data) {
+						alert("Player drafted successfully");
+						document.querySelector("#");
+					} else {
+						alert(message);
 					}
-					html += "</tbody></table>";
-					$("#batters")
-						.empty()
-						.append(html);
-					let html2 =
-						"<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th>Team</th><th>ERA</th><th>WHIP</th><th>W</th></tr></thead><tbody>";
-					for (let i = 0; i < data2.length; i++) {
-						html2 += "<tr>";
-						html2 += "<th scope='row'>" + data2[i].name + "</th>";
-						html2 += "<td>" + data2[i].team + "</td>";
-						html2 += "<td>" + data2[i].ERA + "</td>";
-						html2 += "<td>" + data2[i].WHIP + "</td>";
-						html2 += "<td>" + data2[i].W + "</td>";
-						html2 += "</tr>";
+				});
+			});
+			createForm.submit(function (event) {
+				event.preventDefault();
+				socket.emit("create", createName.val(), user_id, user_name, function (data, name) {
+					if (data) {
+						document.querySelector("#welcome").innerHTML = "<h3>League name: " + createName.val() + "</h3>";
+						createForm.hide();
+						joinForm.hide();
+						document.querySelector("#players").style.display = "flex";
+						document.querySelector("h3").style.display = "none";
+						document.querySelector("h4").style.display = "none";
+						draftForm.show();
+						messageBox.show();
+						//alert(name);
+					} else {
+						document.querySelector("#create-result").innerHTML = "<span class='badge badge-primary'> league already exist</span>";
+						//alert("league name already exist");
 					}
-					html2 += "</tbody></table>";
-					$("#pitchers")
-						.empty()
-						.append(html2);
-				});
-
-				socket.on("nicknames", function(data) {
-					// let html = "";
-					// for (let i = 0; i < data.length; i++) {
-					// 	html += "<li>" + data[i] + "</li>";
-					// }
-					$("#nicknames").append($("<li></li>").text(data));
-				});
-				socket.on("message", function(message) {
-					$("#messages").append($("<li></li>").text(message));
-				});
-				socket.on("end", function(message) {
-					$("#messages").append($("<li></li>").text(message));
-					draftForm.hide();
 				});
 			});
-		</script>
-		<script>
-			document.querySelector("body").addEventListener("click", event => {
-				if (event.target.parentElement.tagName === "TR" && event.target.parentElement.firstChild.innerHTML != "Name") {
-					console.log(event.target.parentElement.firstChild.innerHTML);
-					document.querySelector("#draft").value = event.target.parentElement.firstChild.innerHTML;
+			joinForm.submit(function (event) {
+				event.preventDefault();
+				socket.emit("joinLeague", joinLeague.val(), user_id, user_name, function (data, message) {
+					if (data) {
+						document.querySelector("#welcome").innerHTML = "<h3>League name: " + joinLeague.val() + "</h3>";
+						createForm.hide();
+						joinForm.hide();
+						document.querySelector("#players").style.display = "flex";
+						document.querySelector("h3").style.display = "none";
+						document.querySelector("h4").style.display = "none";
+						draftForm.show();
+						messageBox.show();
+					} else {
+						alert(message);
+					}
+				});
+			});
+			socket.on("disconnect", function () {
+				$("#messages").append("<li>Disconnected</li>");
+				$("#messages").append("<li>Please refresh and rejoin</li>");
+				window.location.reload(false);
+				//socket.connect();
+				// socket.emit("joinLeague", document.querySelector("#welcome").innerHTML, user_id, user_name, function(data) {
+				// 	if (data) {
+				// 		draftForms.show();
+				// 	}
+				// });
+			});
+			socket.on("output", function (data, data2) {
+				let html =
+					"<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th scope='col'>Team</th><th scope='col'>RBI</th><th scope='col'>H</th><th scope='col'>OBP</th><th scope='col'>AVG</th></tr></thead><tbody>";
+				for (let i = 0; i < data.length; i++) {
+					html += "<tr>";
+					html += "<th scope='row'>" + data[i].name + "</th>";
+					html += "<td>" + data[i].team + "</td>";
+					html += "<td>" + data[i].RBI + "</td>";
+					html += "<td>" + data[i].H + "</td>";
+					html += "<td>" + data[i].OBP + "</td>";
+					html += "<td>" + data[i].AVG + "</td>";
+					html += "</tr>";
 				}
+				html += "</tbody></table>";
+				$("#batters")
+					.empty()
+					.append(html);
+				let html2 =
+					"<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th>Team</th><th>ERA</th><th>WHIP</th><th>W</th></tr></thead><tbody>";
+				for (let i = 0; i < data2.length; i++) {
+					html2 += "<tr>";
+					html2 += "<th scope='row'>" + data2[i].name + "</th>";
+					html2 += "<td>" + data2[i].team + "</td>";
+					html2 += "<td>" + data2[i].ERA + "</td>";
+					html2 += "<td>" + data2[i].WHIP + "</td>";
+					html2 += "<td>" + data2[i].W + "</td>";
+					html2 += "</tr>";
+				}
+				html2 += "</tbody></table>";
+				$("#pitchers")
+					.empty()
+					.append(html2);
 			});
-		</script>
-		<script
-			src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-			integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-			crossorigin="anonymous"
-		></script>
-		<script
-			src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-			integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-			crossorigin="anonymous"
-		></script>
-		<script
-			src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-			integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-			crossorigin="anonymous"
-		></script>
-	</body>
+
+			socket.on("nicknames", function (data) {
+				// let html = "";
+				// for (let i = 0; i < data.length; i++) {
+				// 	html += "<li>" + data[i] + "</li>";
+				// }
+				$("#nicknames").append($("<li></li>").text(data));
+			});
+			socket.on("message", function (message) {
+				$("#messages").append($("<li></li>").text(message));
+			});
+			socket.on("end", function (message) {
+				$("#messages").append($("<li></li>").text(message));
+				draftForm.hide();
+			});
+		});
+	</script>
+	<script>
+		document.querySelector("body").addEventListener("click", event => {
+			if (event.target.parentElement.tagName === "TR" && event.target.parentElement.firstChild.innerHTML != "Name") {
+				console.log(event.target.parentElement.firstChild.innerHTML);
+				document.querySelector("#draft").value = event.target.parentElement.firstChild.innerHTML;
+			}
+		});
+	</script>
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+		integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+		crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+		integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+		crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+		integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+		crossorigin="anonymous"></script>
+</body>
+
 </html>
