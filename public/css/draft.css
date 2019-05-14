@@ -1,0 +1,10 @@
+.logo {
+	max-height: 30px;
+	max-width: 30px;
+}
+
+#title { 
+	color: black;
+	text-decoration: none;
+	cursor: auto;
+  }

@@ -22,8 +22,6 @@
 			border-bottom: 1px solid #ccc;
 		}
 
-		#message-box {}
-
 		#draft-form {
 			display: none;
 		}
@@ -46,23 +44,29 @@
 			margin-top: 20px;
 		}
 	</style>
+	<link rel="stylesheet" type="text/css" href="/css/draft.css" />
 </head>
 
-<body>
-	<nav class="navbar navbar-light bg-light">
-		<span class="navbar-brand mb-0 h1"><a href="/">CPBL Manager</a></span>
-		<ul class="nav justify-content-end">
-			<li class="nav-item">
-				<a class="nav-link active" href="/login">Sign up & Sign in</a>
-			</li>
-			<li class="nav-item">
-				<a class="nav-link" href="/user/draft">Create & Join league</a>
-			</li>
-			<li class="nav-item">
-				<a class="nav-link" href="/user/league">My Leagues</a>
-			</li>
-		</ul>
-	</nav>
+<body class="text-center">
+	<div style="width: 100vw">
+		<nav class="navbar  navbar-light bg-light">
+			<div class="navbar-brand mb-0 h1">
+				<img class="logo" src="/images/iconfinder_sports-apparel-13_809685.png" />
+				<span><a id="title" href="/">職棒經理人</a></span>
+			</div>
+			<ul class="nav justify-content-end">
+				<li class="nav-item">
+					<a class="nav-link" href="/user/draft">開始賽季</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/user/league">我的球隊</a>
+				</li>
+				<li id="login" class="nav-item">
+					<a class="nav-link active" href="/login">註冊登入</a>
+				</li>
+			</ul>
+		</nav>
+	</div>
 	<div class="container">
 		<h3>Welcome</h3>
 		<div id="welcome"></div>
