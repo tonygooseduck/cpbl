@@ -18,7 +18,7 @@
 		<nav class="navbar  navbar-light bg-light">
 			<div class="navbar-brand mb-0 h1">
 				<img class="logo" src="/images/iconfinder_sports-apparel-13_809685.png" />
-				<span>職棒經理人</span>
+				<span><a id="title" href="/">職棒經理人</a></span>
 			</div>
 			<ul class="nav justify-content-end">
 				<li class="nav-item">
@@ -100,6 +100,9 @@
 				if (this.readyState == 4 && this.status == 200) {
 					let data = JSON.parse(this.responseText);
 					document.querySelector("#message").innerHTML = this.responseText;
+					if (data.success === 'log in succeeded') {
+						window.location = "/";
+					}
 				}
 			};
 			xhttp.open("POST", "/signin");

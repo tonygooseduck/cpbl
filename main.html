@@ -28,7 +28,7 @@
 					<li class="nav-item">
 						<a class="nav-link" href="/user/league">我的球隊</a>
 					</li>
-					<li class="nav-item">
+					<li id="login" class="nav-item">
 						<a class="nav-link active" href="/login">註冊登入</a>
 					</li>
 				</ul>
@@ -97,24 +97,19 @@
 		integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
 		crossorigin="anonymous"></script>
 	<script>
-		let xhttp = new XMLHttpRequest();
-		xhttp.onreadystatechange = function () {
-			if (this.readyState == 4 && this.status == 200) {
-				let html = "";
-				let data = JSON.parse(this.responseText);
-				html += "<table class='table'><thead><tr><th scope='col'>Number</th><th>Name</th></tr></thead><tbody>";
-				for (let i = 0; i < data.length; i++) {
-					html += "<tr>";
-					//html += "<th scope='row'>" + data[i].name + "</th>";
-					html += "<td>" + data[i].id + "</td>";
-					html += "<td>" + data[i].name + "</td>";
-					html += "</tr>";
+		if (document.cookie) {
+			let xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function () {
+				if (this.readyState == 4 && this.status == 200) {
+					let data = JSON.parse(this.responseText);
+					if (data.name) {
+						document.querySelector("#login").innerHTML = `<p class="nav-link active">${data.name}</p>`;
+					}
 				}
-				html += "</tbody></table>";
-			}
-		};
-		xhttp.open("GET", "/getAllLeague");
-		xhttp.send();
+			};
+			xhttp.open("GET", "/profile");
+			xhttp.send();
+		}
 	</script>
 	<footer class="footer mt-auto py-3">
 		<div class="container">

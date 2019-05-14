@@ -1,188 +1,215 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<!-- Required meta tags -->
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
-		<!-- Bootstrap CSS -->
-		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
-		<title></title>
-		<link rel="stylesheet" type="text/css" href="/css/team.css" />
-	</head>
-	<body class="text-center">
-		<div style="width: 100vw">
-			<nav class="navbar  navbar-light bg-light">
-				<div class="navbar-brand mb-0 h1">
-					<img class="logo" src="/images/iconfinder_sports-apparel-13_809685.png" />
-					<span>職棒經理人</span>
-				</div>
-				<ul class="nav justify-content-end">
-					<li class="nav-item">
-						<a class="nav-link" href="/user/draft">開始賽季</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="/user/team">我的球隊</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link active" href="/login">註冊登入</a>
-					</li>
-				</ul>
-			</nav>
-		</div>
-		<div class="row">
-			<div id="schedule" class="col"></div>
-			<div id="lineup" class="col">
-				<div id="team"></div>
-				<input type="text" id="league" placeholder="click numbers above" />
-				<input type="button" value="Show league" id="changeLeague" />
-				<div id="players"></div>
-				<div id="result"></div>
-				<div id="modify" style="display: none">
-					<input type="text" id="add" class="form-control-plaintext classname" placeholder="Click player to add" readonly />
-					<input type="button" value="Add to lineup" id="addButton" class="text-center" />
-					<input type="text" id="remove" class="form-control-plaintext classname" placeholder="Click player to remove" readonly />
-					<input type="button" value="Remove from lineup" id="removeButton" />
-					<div>
-						<button class="btn btn-lg btn-primary btn-block" id="readyButton" type="submit">Ready to play</button>
-					</div>
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+		integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+	<title></title>
+	<link rel="stylesheet" type="text/css" href="/css/team.css" />
+</head>
+
+<body class="text-center">
+	<div style="width: 100vw">
+		<nav class="navbar  navbar-light bg-light">
+			<div class="navbar-brand mb-0 h1">
+				<img class="logo" src="/images/iconfinder_sports-apparel-13_809685.png" />
+				<span><a id="title" href="/">職棒經理人</a></span>
+			</div>
+			<ul class="nav justify-content-end">
+				<li class="nav-item">
+					<a class="nav-link" href="/user/draft">開始賽季</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/user/league">我的球隊</a>
+				</li>
+				<li id="login" class="nav-item">
+					<a class="nav-link active" href="/login">註冊登入</a>
+				</li>
+			</ul>
+		</nav>
+	</div>
+	<div class="row">
+		<div id="schedule" class="col"></div>
+		<div id="lineup" class="col">
+			<div id="team"></div>
+			<input type="text" id="league" placeholder="click numbers above" />
+			<input type="button" value="Show league" id="changeLeague" />
+			<div id="players"></div>
+			<div id="result"></div>
+			<div id="modify" style="display: none">
+				<input type="text" id="add" class="form-control-plaintext classname" placeholder="Click player to add"
+					readonly />
+				<input type="button" value="Add to lineup" id="addButton" class="text-center" />
+				<input type="text" id="remove" class="form-control-plaintext classname"
+					placeholder="Click player to remove" readonly />
+				<input type="button" value="Remove from lineup" id="removeButton" />
+				<div>
+					<button class="btn btn-lg btn-primary btn-block" id="readyButton" type="submit">Ready to
+						play</button>
 				</div>
 			</div>
 		</div>
+	</div>
 
-		<script>
-			let xhttp = new XMLHttpRequest();
-			xhttp.onreadystatechange = function() {
-				let html = "";
+	<script>
+		let xhttp = new XMLHttpRequest();
+		xhttp.onreadystatechange = function () {
+			let html = "";
+			if (this.readyState == 4 && this.status == 200) {
+				let data = JSON.parse(this.responseText);
+				for (let i = 0; i < data.length; i++) {
+					html += "<span class='badge badge-primary'>" + data[i].league_id + "</span>";
+				}
+				document.querySelector("#team").innerHTML = html;
+			}
+		};
+		xhttp.open("GET", "/user/team", true);
+		xhttp.send();
+	</script>
+	<script>
+		document.querySelector("#changeLeague").addEventListener("click", function () {
+			let html = "";
+			xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function () {
 				if (this.readyState == 4 && this.status == 200) {
+					document.querySelector("#modify").style.display = "block";
 					let data = JSON.parse(this.responseText);
+					html += "<table class='table'><thead><tr><th scope='col'>Name</th><th>Status</th></tr></thead><tbody>";
 					for (let i = 0; i < data.length; i++) {
-						html += "<span class='badge badge-primary'>" + data[i].league_id + "</span>";
+						html += "<tr>";
+						//html += "<th scope='row'>" + data[i].name + "</th>";
+						html += "<td>" + data[i].player_name + "</td>";
+						html += "<td>" + data[i].player_status + "</td>";
+						html += "</tr>";
 					}
-					document.querySelector("#team").innerHTML = html;
+					html += "</tbody></table>";
+					document.querySelector("#players").innerHTML = html;
 				}
 			};
-			xhttp.open("GET", "/user/team", true);
+			xhttp.open("POST", "/user/draft");
+			xhttp.setRequestHeader("Content-Type", "application/json");
+			xhttp.send(JSON.stringify({ league: document.querySelector("#league").value }));
+			// schedule
+			let html2 = "";
+			let xhttp2 = new XMLHttpRequest();
+			xhttp2.onreadystatechange = function () {
+				if (this.readyState == 4 && this.status == 200) {
+					let data = JSON.parse(this.responseText);
+					html2 += "<table class='table'><thead><tr><th scope='col'>Date</th><th>Opponent</th><th>Opponent Status</th><th>Result</th></tr></thead><tbody>";
+					for (let i = 0; i < data.length; i++) {
+						html2 += "<tr>";
+						//html += "<th scope='row'>" + data[i].name + "</th>";
+						html2 += `<td>${new Date(Date.now() + data[i].date).toLocaleString()}</td>`;
+						html2 += "<td>" + data[i].name + "</td>";
+						if (data[i].away_user_status) {
+							html2 += "<td>" + data[i].away_user_status + "</td>";
+							html2 += "<td>" + data[i].home_user_result + "</td>";
+						} else {
+							html2 += "<td>" + data[i].home_user_status + "</td>";
+							html2 += "<td>" + data[i].away_user_result + "</td>";
+						}
+						html2 += "</tr>";
+					}
+					html2 += "</tbody></table>";
+					document.querySelector("#schedule").innerHTML = html2;
+				}
+			};
+			xhttp2.open("POST", "/user/schedule");
+			xhttp2.setRequestHeader("Content-Type", "application/json");
+			xhttp2.send(JSON.stringify({ league: document.querySelector("#league").value }));
+		});
+	</script>
+	<script>
+		document.querySelector("#addButton").addEventListener("click", function () {
+			xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function () {
+				if (this.readyState == 4 && this.status == 200) {
+					let data = JSON.parse(this.responseText);
+					document.querySelector("#result").innerHTML = "<span class='badge badge-info'>" + data.result + "</span>";
+				}
+			};
+			xhttp.open("POST", "/add/lineup");
+			xhttp.setRequestHeader("Content-Type", "application/json");
+			xhttp.send(JSON.stringify({ name: document.querySelector("#add").value, league: document.querySelector("#league").value }));
+		});
+	</script>
+	<script>
+		document.querySelector("#removeButton").addEventListener("click", function () {
+			xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function () {
+				if (this.readyState == 4 && this.status == 200) {
+					let data = JSON.parse(this.responseText);
+					document.querySelector("#result").innerHTML = "<span class='badge badge-info'>" + data.result + "</span>";
+				}
+			};
+			xhttp.open("POST", "/remove/lineup");
+			xhttp.setRequestHeader("Content-Type", "application/json");
+			xhttp.send(JSON.stringify({ name: document.querySelector("#remove").value, league: document.querySelector("#league").value }));
+		});
+	</script>
+	<script>
+		document.querySelector("#readyButton").addEventListener("click", function () {
+			xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function () {
+				if (this.readyState == 4 && this.status == 200) {
+					let data = JSON.parse(this.responseText);
+					document.querySelector("#result").innerHTML = "<span class='badge badge-info'>" + data.result + "</span>";
+				}
+			};
+			xhttp.open("POST", "/ready/lineup");
+			xhttp.setRequestHeader("Content-Type", "application/json");
+			xhttp.send(JSON.stringify({ league: document.querySelector("#league").value }));
+		});
+	</script>
+	<script>
+		document.querySelector("body").addEventListener("click", event => {
+			if (event.target.parentElement.id == "team") {
+				console.log(event.target.parentElement.id);
+				document.querySelector("#league").value = event.target.innerHTML;
+			}
+		});
+		document.querySelector("body").addEventListener("click", event => {
+			if (event.target.parentElement.tagName === "TR" && event.target.parentElement.firstChild.innerHTML != "Name") {
+				console.log(event.target.parentElement.lastChild);
+				if (event.target.parentElement.lastChild.innerHTML == "Bench") {
+					document.querySelector("#remove").value = "";
+					document.querySelector("#add").value = event.target.parentElement.firstChild.innerHTML;
+				} else if (event.target.parentElement.lastChild.innerHTML == "Start") {
+					document.querySelector("#add").value = "";
+					document.querySelector("#remove").value = event.target.parentElement.firstChild.innerHTML;
+				}
+			}
+		});
+	</script>
+	<script>
+		if (document.cookie) {
+			let xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function () {
+				if (this.readyState == 4 && this.status == 200) {
+					let data = JSON.parse(this.responseText);
+					if (data.name) {
+						document.querySelector("#login").innerHTML = `<p class="nav-link active">${data.name}</p>`;
+					}
+				}
+			};
+			xhttp.open("GET", "/profile");
 			xhttp.send();
-		</script>
-		<script>
-			document.querySelector("#changeLeague").addEventListener("click", function() {
-				let html = "";
-				xhttp = new XMLHttpRequest();
-				xhttp.onreadystatechange = function() {
-					if (this.readyState == 4 && this.status == 200) {
-						document.querySelector("#modify").style.display = "block";
-						let data = JSON.parse(this.responseText);
-						html += "<table class='table'><thead><tr><th scope='col'>Name</th><th>Status</th></tr></thead><tbody>";
-						for (let i = 0; i < data.length; i++) {
-							html += "<tr>";
-							//html += "<th scope='row'>" + data[i].name + "</th>";
-							html += "<td>" + data[i].player_name + "</td>";
-							html += "<td>" + data[i].player_status + "</td>";
-							html += "</tr>";
-						}
-						html += "</tbody></table>";
-						document.querySelector("#players").innerHTML = html;
-					}
-				};
-				xhttp.open("POST", "/user/draft");
-				xhttp.setRequestHeader("Content-Type", "application/json");
-				xhttp.send(JSON.stringify({ league: document.querySelector("#league").value }));
-				// schedule
-				let html2 = "";
-				let xhttp2 = new XMLHttpRequest();
-				xhttp2.onreadystatechange = function() {
-					if (this.readyState == 4 && this.status == 200) {
-						let data = JSON.parse(this.responseText);
-						html2 += "<table class='table'><thead><tr><th scope='col'>Date</th><th>Opponent</th><th>Opponent Status</th><th>Result</th></tr></thead><tbody>";
-						for (let i = 0; i < data.length; i++) {
-							html2 += "<tr>";
-							//html += "<th scope='row'>" + data[i].name + "</th>";
-							html2 += `<td>${new Date(Date.now() + data[i].date).toLocaleString()}</td>`;
-							html2 += "<td>" + data[i].name + "</td>";
-							if (data[i].away_user_status) {
-								html2 += "<td>" + data[i].away_user_status + "</td>";
-								html2 += "<td>" + data[i].home_user_result + "</td>";
-							} else {
-								html2 += "<td>" + data[i].home_user_status + "</td>";
-								html2 += "<td>" + data[i].away_user_result + "</td>";
-							}
-							html2 += "</tr>";
-						}
-						html2 += "</tbody></table>";
-						document.querySelector("#schedule").innerHTML = html2;
-					}
-				};
-				xhttp2.open("POST", "/user/schedule");
-				xhttp2.setRequestHeader("Content-Type", "application/json");
-				xhttp2.send(JSON.stringify({ league: document.querySelector("#league").value }));
-			});
-		</script>
-		<script>
-			document.querySelector("#addButton").addEventListener("click", function() {
-				xhttp = new XMLHttpRequest();
-				xhttp.onreadystatechange = function() {
-					if (this.readyState == 4 && this.status == 200) {
-						let data = JSON.parse(this.responseText);
-						document.querySelector("#result").innerHTML = "<span class='badge badge-info'>" + data.result + "</span>";
-					}
-				};
-				xhttp.open("POST", "/add/lineup");
-				xhttp.setRequestHeader("Content-Type", "application/json");
-				xhttp.send(JSON.stringify({ name: document.querySelector("#add").value, league: document.querySelector("#league").value }));
-			});
-		</script>
-		<script>
-			document.querySelector("#removeButton").addEventListener("click", function() {
-				xhttp = new XMLHttpRequest();
-				xhttp.onreadystatechange = function() {
-					if (this.readyState == 4 && this.status == 200) {
-						let data = JSON.parse(this.responseText);
-						document.querySelector("#result").innerHTML = "<span class='badge badge-info'>" + data.result + "</span>";
-					}
-				};
-				xhttp.open("POST", "/remove/lineup");
-				xhttp.setRequestHeader("Content-Type", "application/json");
-				xhttp.send(JSON.stringify({ name: document.querySelector("#remove").value, league: document.querySelector("#league").value }));
-			});
-		</script>
-		<script>
-			document.querySelector("#readyButton").addEventListener("click", function() {
-				xhttp = new XMLHttpRequest();
-				xhttp.onreadystatechange = function() {
-					if (this.readyState == 4 && this.status == 200) {
-						let data = JSON.parse(this.responseText);
-						document.querySelector("#result").innerHTML = "<span class='badge badge-info'>" + data.result + "</span>";
-					}
-				};
-				xhttp.open("POST", "/ready/lineup");
-				xhttp.setRequestHeader("Content-Type", "application/json");
-				xhttp.send(JSON.stringify({ league: document.querySelector("#league").value }));
-			});
-		</script>
-		<script>
-			document.querySelector("body").addEventListener("click", event => {
-				if (event.target.parentElement.id == "team") {
-					console.log(event.target.parentElement.id);
-					document.querySelector("#league").value = event.target.innerHTML;
-				}
-			});
-			document.querySelector("body").addEventListener("click", event => {
-				if (event.target.parentElement.tagName === "TR" && event.target.parentElement.firstChild.innerHTML != "Name") {
-					console.log(event.target.parentElement.lastChild);
-					if (event.target.parentElement.lastChild.innerHTML == "Bench") {
-						document.querySelector("#remove").value = "";
-						document.querySelector("#add").value = event.target.parentElement.firstChild.innerHTML;
-					} else if (event.target.parentElement.lastChild.innerHTML == "Start") {
-						document.querySelector("#add").value = "";
-						document.querySelector("#remove").value = event.target.parentElement.firstChild.innerHTML;
-					}
-				}
-			});
-		</script>
+		}
+	</script>
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+		integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+		crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+		integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+		crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+		integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+		crossorigin="anonymous"></script>
+</body>
 
-		<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-	</body>
 </html>
