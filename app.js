@@ -23,10 +23,10 @@ app.use(express.static('public'));
 
 // MySQL Initialization
 const db = require('./db.js');
-const cert = require('./util/cert.js');
+// const cert = require('./util/cert.js');
 
-const options = { key: cert.privateKey, cert: cert.certificate, ca: cert.chain };
-const server = require('https').Server(options, app);
+// const options = { key: cert.privateKey, cert: cert.certificate, ca: cert.chain };
+const server = require('http').Server(app);
 
 // const server = require('http').Server(app);
 // attach the socket.io server
