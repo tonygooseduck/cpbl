@@ -961,4 +961,4 @@ function getPlayerList(player, callback) {
   });
 }
 
-server.listen(443, () => console.log('server running on port 80'));
+server.listen(3000, () => console.log('server running on port 3000'));
