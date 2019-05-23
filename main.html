@@ -96,21 +96,9 @@
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
 		integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
 		crossorigin="anonymous"></script>
-	<script>
-		if (document.cookie) {
-			let xhttp = new XMLHttpRequest();
-			xhttp.onreadystatechange = function () {
-				if (this.readyState == 4 && this.status == 200) {
-					let data = JSON.parse(this.responseText);
-					if (data.name) {
-						document.querySelector("#login").innerHTML = `<p class="nav-link active">${data.name}</p>`;
-					}
-				}
-			};
-			xhttp.open("GET", "/profile");
-			xhttp.send();
-		}
-	</script>
+
+	<script src="/js/profile.js"></script>
+
 	<footer class="footer mt-auto py-3">
 		<div class="container">
 			<span class="text-muted"></span>
