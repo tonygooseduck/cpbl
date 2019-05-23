@@ -68,41 +68,40 @@
 		</nav>
 	</div>
 	<div class="container">
-		<h3>Welcome</h3>
-		<div id="welcome"></div>
 		<div>
-			<ul id="nicknames"></ul>
+			<h4>創建新賽季或加入別人建立的賽季</h4>
 		</div>
-		<h4>Create new league or join existed league</h4>
 		<div class="row">
 			<form id="create-form" class="col">
 				<div id="create-result"></div>
-				<label style="text-align: center" for="create">Create new league:</label>
-				<input type="text" id="create-name" class="form-control classname" placeholder="Enter league name" />
-				<input style="margin-top: 10px" type="submit" value="create" />
-			</form>
-			<form id="join-form" class="col">
-				<div id="join-result"></div>
-				<label for="join">Join:</label>
-				<input type="text" id="join" class="form-control classname" placeholder="Enter existed league name" />
-				<input style="margin-top: 10px" type="submit" value="join" />
+				<label style="text-align: center" for="create">創建賽季</label>
+				<input type="text" id="create-name" class="form-control classname" placeholder="幫賽季取個名字" />
+				<input style="margin-top: 10px" type="submit" value="創建" />
 			</form>
 		</div>
 		<div class="row">
-			<form id="draft-form" class="col">
-				<label for="draft"></label>
-				<input class="form-control" type="text" placeholder="Click on player row to draft" id="draft" readonly
-					style="margin-bottom: 0.5em" />
-				<input class="btn btn-lg btn-secondary" type="submit" style="margin-bottom: 0.5em" value="draft" />
+			<form id="join-form" class="col">
+				<div id="join-result"></div>
+				<label for="join">加入賽季</label>
+				<input type="text" id="join" class="form-control classname" placeholder="輸入已建立的賽季名稱" />
+				<input style="margin-top: 10px" type="submit" value="加入" />
 			</form>
-			<div id="message-box" class="col" style="display: none">
-				<ul id="messages"></ul>
-			</div>
 		</div>
-		<div id="players" class="row" style="display: none">
-			<div id="batters" class="col"></div>
-			<div id="pitchers" class="col"></div>
+	</div>
+	<div class="row">
+		<form id="draft-form" class="col">
+			<label for="draft"></label>
+			<input class="form-control" type="text" placeholder="Click on player row to draft" id="draft" readonly
+				style="margin-bottom: 0.5em" />
+			<input class="btn btn-lg btn-secondary" type="submit" style="margin-bottom: 0.5em" value="draft" />
+		</form>
+		<div id="message-box" class="col" style="display: none">
+			<ul id="messages"></ul>
 		</div>
+	</div>
+	<div id="players" class="row" style="display: none">
+		<div id="batters" class="col"></div>
+		<div id="pitchers" class="col"></div>
 	</div>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
@@ -113,7 +112,7 @@
 		xhttp.onreadystatechange = function () {
 			if (this.readyState == 4 && this.status == 200) {
 				let data = JSON.parse(this.responseText);
-				document.querySelector("#welcome").innerHTML = data.name;
+				// document.querySelector("#welcome").innerHTML = data.name;
 				user_id = data.id;
 				user_name = data.name;
 			}
@@ -154,12 +153,13 @@
 				event.preventDefault();
 				socket.emit("create", createName.val(), user_id, user_name, function (data, name) {
 					if (data) {
-						document.querySelector("#welcome").innerHTML = "<h3>League name: " + createName.val() + "</h3>";
+						// document.querySelector("#welcome").innerHTML = "<h3>League name: " + createName.val() + "</h3>";
 						createForm.hide();
 						joinForm.hide();
 						document.querySelector("#players").style.display = "flex";
-						document.querySelector("h3").style.display = "none";
-						document.querySelector("h4").style.display = "none";
+						// document.querySelector("h3").style.display = "none";
+						// document.querySelector("h4").style.display = "none";
+						document.querySelector(".container").style.display = "none";
 						draftForm.show();
 						messageBox.show();
 						//alert(name);
