@@ -481,13 +481,13 @@ app.get('/getAllLeague', (req, res) => {
   });
 });
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'main.html'));
+  res.sendFile(path.join(__dirname, 'public/main.html'));
 });
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'user.html'));
+  res.sendFile(path.join(__dirname, 'public/user.html'));
 });
 app.get('/user/draft', (req, res) => {
-  res.sendFile(path.join(__dirname, 'draft.html'));
+  res.sendFile(path.join(__dirname, 'public/draft.html'));
 });
 
 app.get('/getplayerdata', (req, res) => {
@@ -572,10 +572,10 @@ app.post('/user/schedule', (req, res) => {
   }
 });
 app.get('/user/mock-draft', (req, res) => {
-  res.sendFile(path.join(__dirname, 'mock-draft.html'));
+  res.sendFile(path.join(__dirname, 'public/mock-draft.html'));
 });
 app.get('/user/league', (req, res) => {
-  res.sendFile(path.join(__dirname, 'team.html'));
+  res.sendFile(path.join(__dirname, 'public/team.html'));
 });
 
 app.get('/profile', function (req, res) {
