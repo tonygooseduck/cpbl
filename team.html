@@ -33,12 +33,12 @@
 			</ul>
 		</nav>
 	</div>
+	<div class="container">
+		<div id="team"></div>
+	</div>
 	<div class="row">
 		<div id="schedule" class="col"></div>
 		<div id="lineup" class="col">
-			<div id="team"></div>
-			<input type="text" id="league" placeholder="click numbers above" />
-			<input type="button" value="Show league" id="changeLeague" />
 			<div id="players"></div>
 			<div id="result"></div>
 			<div id="modify" style="display: none">
@@ -63,7 +63,7 @@
 			if (this.readyState == 4 && this.status == 200) {
 				let data = JSON.parse(this.responseText);
 				for (let i = 0; i < data.length; i++) {
-					html += "<span class='badge badge-primary'>" + data[i].league_id + "</span>";
+					html += `<span class='badge badge-primary' data-id='${data[i].league_id}'>${data[i].name}</span>`;
 				}
 				document.querySelector("#team").innerHTML = html;
 			}
@@ -135,7 +135,7 @@
 			};
 			xhttp.open("POST", "/add/lineup");
 			xhttp.setRequestHeader("Content-Type", "application/json");
-			xhttp.send(JSON.stringify({ name: document.querySelector("#add").value, league: document.querySelector("#league").value }));
+			xhttp.send(JSON.stringify({ name: document.querySelector("#add").value, league: temp }));
 		});
 	</script>
 	<script>
@@ -149,7 +149,7 @@
 			};
 			xhttp.open("POST", "/remove/lineup");
 			xhttp.setRequestHeader("Content-Type", "application/json");
-			xhttp.send(JSON.stringify({ name: document.querySelector("#remove").value, league: document.querySelector("#league").value }));
+			xhttp.send(JSON.stringify({ name: document.querySelector("#remove").value, league: temp }));
 		});
 	</script>
 	<script>
@@ -167,10 +167,61 @@
 		});
 	</script>
 	<script>
+		let temp = null;
 		document.querySelector("body").addEventListener("click", event => {
 			if (event.target.parentElement.id == "team") {
 				console.log(event.target.parentElement.id);
-				document.querySelector("#league").value = event.target.innerHTML;
+				// document.querySelector("#league").value = event.target.innerHTML;
+				let html = "";
+				xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function () {
+					if (this.readyState == 4 && this.status == 200) {
+						document.querySelector("#modify").style.display = "block";
+						let data = JSON.parse(this.responseText);
+						html += "<table class='table'><thead><tr><th scope='col'>Name</th><th>Status</th></tr></thead><tbody>";
+						for (let i = 0; i < data.length; i++) {
+							html += "<tr>";
+							//html += "<th scope='row'>" + data[i].name + "</th>";
+							html += "<td>" + data[i].player_name + "</td>";
+							html += "<td>" + data[i].player_status + "</td>";
+							html += "</tr>";
+						}
+						html += "</tbody></table>";
+						document.querySelector("#players").innerHTML = html;
+					}
+				};
+				xhttp.open("POST", "/user/draft");
+				xhttp.setRequestHeader("Content-Type", "application/json");
+				xhttp.send(JSON.stringify({ league: event.target.dataset.id }));
+
+				let html2 = "";
+				let xhttp2 = new XMLHttpRequest();
+				xhttp2.onreadystatechange = function () {
+					if (this.readyState == 4 && this.status == 200) {
+						let data = JSON.parse(this.responseText);
+						html2 += "<table class='table'><thead><tr><th scope='col'>Date</th><th>Opponent</th><th>Opponent Status</th><th>Result</th></tr></thead><tbody>";
+						for (let i = 0; i < data.length; i++) {
+							html2 += "<tr>";
+							//html += "<th scope='row'>" + data[i].name + "</th>";
+							html2 += `<td>${new Date(Date.now() + data[i].date).toLocaleString()}</td>`;
+							html2 += "<td>" + data[i].name + "</td>";
+							if (data[i].away_user_status) {
+								html2 += "<td>" + data[i].away_user_status + "</td>";
+								html2 += "<td>" + data[i].home_user_result + "</td>";
+							} else {
+								html2 += "<td>" + data[i].home_user_status + "</td>";
+								html2 += "<td>" + data[i].away_user_result + "</td>";
+							}
+							html2 += "</tr>";
+						}
+						html2 += "</tbody></table>";
+						document.querySelector("#schedule").innerHTML = html2;
+					}
+				};
+				xhttp2.open("POST", "/user/schedule");
+				xhttp2.setRequestHeader("Content-Type", "application/json");
+				xhttp2.send(JSON.stringify({ league: event.target.dataset.id }));
+				temp = event.target.dataset.id;
 			}
 		});
 		document.querySelector("body").addEventListener("click", event => {

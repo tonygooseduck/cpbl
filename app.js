@@ -506,7 +506,7 @@ app.get('/user/team', (req, res) => {
         return;
       }
       let id = results[0].id;
-      db.query(`select league_id from cpbl_draft where user_id = '${id}' group by league_id`, function (error, results, fields) {
+      db.query(`select name,league_id from cpbl_draft join cpbl_league on cpbl_draft.league_id = cpbl_league.id where user_id = '${id}' group by league_id`, function (error, results) {
         if (error) {
           throw error;
         }
@@ -658,7 +658,7 @@ app.post('/remove/lineup', (req, res) => {
 app.post('/ready/lineup', (req, res) => {
   let data = req.body;
   if (req.cookies.access_token) {
-    db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results, fields) {
+    db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results) {
       if (error) {
         throw error;
       }

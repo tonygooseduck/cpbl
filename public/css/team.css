@@ -4,13 +4,16 @@ button {
 
 .form-control-plaintext {
 	margin-top: 50px;
+	margin: auto;
+	width: 50%;
+	border: 2px solid black;
 }
 
 .badge {
-	margin-top: 0.25em;
-	margin-bottom: 0.25em;
+	margin-top: 1.25em;
+	margin-bottom: 1.25em;
 	margin-right: 0.5em;
-	font-size: 100%;
+	font-size: 150%;
 }
 
 #league {
@@ -19,8 +22,8 @@ button {
 }
 
 .logo {
-	max-height: 30px;
-	max-width: 30px;
+	max-height: 25px;
+	max-width: 25px;
 }
 
 #title { 
@@ -28,3 +31,12 @@ button {
 	text-decoration: none;
 	cursor: auto;
   }
+#add {
+	margin-bottom: 20px;
+}
+#addButton {
+	margin-bottom: 20px;
+}
+#remove {
+	margin-bottom: 20px;
+}

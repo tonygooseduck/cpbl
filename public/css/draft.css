@@ -15,12 +15,24 @@
 	font-size: 1.5rem;
 	border: none;
 }
+#create-form label {
+	font-size: 2.5rem;
+}
+#create-form input {
+	border-radius: 10px;
+}
 #join-form {
 	margin: auto;
 	margin-top: 50px;
 	max-width: 60%;
 	font-size: 1.5rem;
 	border: none;
+}
+#join-form label {
+	font-size: 2.5rem;
+}
+#join-form input {
+	border-radius: 10px;
 }
   .container {
 	  margin-top: 100px;
@@ -41,6 +53,7 @@
 	z-index: -1;   
   }
 
-  div h4 {
-	  font-size: 2.5rem;
+  .form-control {
+	  margin: auto;
+	  width: 70%;
   }
