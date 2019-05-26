@@ -1,99 +1,183 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <title>cpbl mock draft</title>
-        <link rel="stylesheet" type="text/css" href="main.css" media="all" />
-        <style type="text/css">
-            #messages { padding: 0px; list-style-type: none;}
-            #messages li { padding: 2px 0px; border-bottom: 1px solid #ccc; }
-            
-        </style>
-    </head>
-    <body>
-        <div id="wrapper">
-            <button id="start", type="submit">Start draft</button>
-            <form id="room-form">
-                <label for="room">Room:</label>
-                <input type="text" id="room" />
-                <input type="submit" />
-            </form>
-            <form id="draft-form">
-                <label for="draft">Draft:</label>
-                <input type="text" id="draft" />
-                <input type="submit" />
-            </form>
-            <section>
-                <ul id="messages"></ul>
-            </section>
-            <table id="players">
-            </table>
-        </div>
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-        <script src="/socket.io/socket.io.js"></script>
-        <script>
-            let socket = io('/mock-draft');
-            socket.on('connect', function(){
-                socket.on('output', function(data) {
-                    let html = '<tr><th>Name</th><th>Team</th><th>RBI</th><th>H</th><th>OBP</th><th>AVG</th><th>ERA</th><th>WHIP</th><th>W</th></tr>';
-                    for(let i = 0; i < data.length; i++) {
-                        if(i)
-                        html += '<tr>';
-                        html += '<th>' + data[i].name + '</th>';
-                        html += '<th>' + data[i].team + '</th>';
-                        html += '<th>' + data[i].RBI + '</th>';
-                        html += '<th>' + data[i].H + '</th>';
-                        html += '<th>' + data[i].OBP + '</th>';
-                        html += '<th>' + data[i].AVG + '</th>';
-                        html += '<th>' + data[i].ERA + '</th>';
-                        html += '<th>' + data[i].WHIP + '</th>';
-                        html += '<th>' + data[i].W + '</th>';
-                        html += '</tr>';
-                    }
-                    document.querySelector('#players').innerHTML = html;
-                });
-                socket.on('messages', function(data) {
-                    document.querySelector('#messages').innerHTML += `<li>${data}</li>`;
-                });
-                socket.on('end', function(data) {
-                    draftForm.style.display = 'none';
-                });
-                const roomForm = document.querySelector('#room-form');
-                let room = document.querySelector('#room');
-                roomForm.addEventListener('submit', function(event) {
-                    event.preventDefault();
-                    socket.emit('joinroom', room.value, function(data) {
-                        if(data) {
-                            alert('room already existed');
-                        } else {
-                            roomForm.style.display = 'none';
-                        }
-                    });
-                });
 
-                const draftForm = document.querySelector('#draft-form');
-                let pick = document.querySelector('#draft');
-                draftForm.addEventListener('submit', function(event) {
-                    event.preventDefault();
-                    socket.emit('draft', pick.value, function(data) {
-                        if(data) {
-                            alert(data);
-                        }
-                        else {
-                            alert('unknown error');
-                        }
-                    });
-                });
-                const start = document.querySelector('#start');
-                start.addEventListener('click', function(event) {
-                    event.preventDefault();
-                    socket.emit('start', 'nothing', function(data) {
-                        if(data) {
-                            start.style.display = 'none';
-                        }
-                    });
-                });
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
+    <title>cpbl mock draft</title>
+    <style type="text/css">
+        #messages {
+            padding: 0px;
+            list-style-type: none;
+        }
+
+        #messages li {
+            padding: 2px 0px;
+            border-bottom: 1px solid #ccc;
+        }
+    </style>
+    <link rel="stylesheet" type="text/css" href="/css/mock.css" />
+</head>
+
+<body>
+    <div style="width: 100vw">
+        <nav class="navbar  navbar-light bg-light">
+            <div class="navbar-brand mb-0 h1">
+                <img class="logo" src="/images/iconfinder_sports-apparel-13_809685.png" />
+                <span><a id="title" href="/">職棒經理人</a></span>
+            </div>
+            <ul class="nav justify-content-end">
+                <li class="nav-item">
+                    <a class="nav-link" href="/user/draft">開始賽季</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/user/league">我的球隊</a>
+                </li>
+                <li id="login" class="nav-item">
+                    <a class="nav-link active" href="/login">註冊登入</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    <div class="container">
+        <button id="start" , type="submit">Start draft</button>
+        <form id="room-form">
+            <label for="room">Room:</label>
+            <input type="text" id="room" />
+            <input type="submit" />
+        </form>
+        <form id="draft-form">
+            <label for="draft">Draft:</label>
+            <input type="text" id="draft" />
+            <input type="submit" />
+        </form>
+        <section>
+            <ul id="messages"></ul>
+        </section>
+        <div id="players" class="row">
+            <div id="batters" class="col"></div>
+            <div id="pitchers" class="col"></div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+    <script src="/js/profile.js">
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket = io('/mock-draft');
+        socket.on('connect', function () { });
+        window.setInterval(function () {
+            socket.emit("abc", "alive");
+        }, 10000);
+        socket.on("output", function (data, data2) {
+            let html =
+                "<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th scope='col'>Team</th><th scope='col'>RBI</th><th scope='col'>H</th><th scope='col'>OBP</th><th scope='col'>AVG</th></tr></thead><tbody>";
+            for (let i = 0; i < data.length; i++) {
+                html += "<tr>";
+                html += "<th scope='row'>" + data[i].name + "</th>";
+                html += "<td>" + data[i].team + "</td>";
+                html += "<td>" + data[i].RBI + "</td>";
+                html += "<td>" + data[i].H + "</td>";
+                html += "<td>" + data[i].OBP + "</td>";
+                html += "<td>" + data[i].AVG + "</td>";
+                html += "</tr>";
+            }
+            html += "</tbody></table>";
+            document.querySelector("#batters").innerHTML = html;
+            let html2 =
+                "<table class='table table-striped'><thead><tr><th scope='col'>Name</th><th>Team</th><th>ERA</th><th>WHIP</th><th>W</th></tr></thead><tbody>";
+            for (let i = 0; i < data2.length; i++) {
+                html2 += "<tr>";
+                html2 += "<th scope='row'>" + data2[i].name + "</th>";
+                html2 += "<td>" + data2[i].team + "</td>";
+                html2 += "<td>" + data2[i].ERA + "</td>";
+                html2 += "<td>" + data2[i].WHIP + "</td>";
+                html2 += "<td>" + data2[i].W + "</td>";
+                html2 += "</tr>";
+            }
+            html2 += "</tbody></table>";
+            document.querySelector("#pitchers").innerHTML = html2;
+        });
+        socket.on('messages', function (data) {
+            document.querySelector('#messages').innerHTML += `<li>${data}</li>`;
+        });
+        socket.on('end', function (data) {
+            draftForm.style.display = 'none';
+        });
+        const roomForm = document.querySelector('#room-form');
+        const draftForm = document.querySelector('#draft-form');
+        const start = document.querySelector('#start');
+        // let room = document.querySelector('#room');
+        // roomForm.addEventListener('submit', function (event) {
+        //     event.preventDefault();
+        //     socket.emit('joinroom', room.value, function (data) {
+        //         if (data) {
+        //             alert('room already existed');
+        //         } else {
+        //             roomForm.style.display = 'none';
+        //         }
+        //     });
+        // });
+        roomForm.style.display = 'none';
+        draftForm.style.display = 'none';
+        start.style.display = 'none';
+        if (document.cookie) {
+            let xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    let data = JSON.parse(this.responseText);
+                    if (data.id) {
+                        socket.emit('joinroom', data.id, function (data) {
+                            if (data) {
+
+                            } else {
+                                draftForm.style.display = 'block';
+                                start.style.display = 'block';
+                            }
+                        });
+                    }
+                }
+            };
+            xhttp.open("GET", "/profile");
+            xhttp.send();
+        }
+        let pick = document.querySelector('#draft');
+        draftForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            socket.emit('draft', pick.value, function (data) {
+                if (data) {
+                    alert(data);
+                }
+                else {
+                    alert('unknown error');
+                }
             });
-        </script>
-    </body>
+        });
+
+        start.addEventListener('click', function (event) {
+            event.preventDefault();
+            socket.emit('start', 'nothing', function (data) {
+                if (data) {
+                    start.style.display = 'none';
+                }
+            });
+        });
+
+    </script>
+</body>
+
 </html>

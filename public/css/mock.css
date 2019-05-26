@@ -1,0 +1,13 @@
+.logo {
+	max-height: 25px;
+	max-width: 25px;
+}
+
+#title { 
+	color: black;
+	text-decoration: none;
+	cursor: auto;
+  }
+#wrapper {
+    margin: auto;
+}

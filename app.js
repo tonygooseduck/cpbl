@@ -116,11 +116,8 @@ mock.on('connection', (socket) => {
   let playerList;
   let rand;
   console.log(`${socket.id} connected`);
-  getPlayerData('player', (result) => {
-    socket.emit('output', result);
-  });
-  getPlayerList('player', (result) => {
-    playerList = JSON.stringify(result);
+  getPlayerData('player', (result1, result2) => {
+    socket.emit('output', result1, result2);
   });
   socket.on('disconnect', (reason) => {
     console.log(reason);
@@ -136,7 +133,10 @@ mock.on('connection', (socket) => {
         // create room in rooms
         rooms[data] = {};
         rooms[socket.mock].draftPlayers = ['AlphaGo', 'AlphaStar', 'OpenAI'];
-        rooms[socket.mock].playerList = JSON.parse(playerList);
+        getPlayerList('player', (result) => {
+          rooms[data].playerList = result;
+        });
+        // rooms[socket.mock].playerList = JSON.parse(playerList);
         rooms[socket.mock].draftedList = [];
         rooms[socket.mock].temp = [];
         rooms[socket.mock].turn;
