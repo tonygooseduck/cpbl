@@ -23,12 +23,8 @@ app.use(express.static('public'));
 
 // MySQL Initialization
 const db = require('./db.js');
-// const cert = require('./util/cert.js');
-
-// const options = { key: cert.privateKey, cert: cert.certificate, ca: cert.chain };
 const server = require('http').Server(app);
 
-// const server = require('http').Server(app);
 // attach the socket.io server
 const io = require('socket.io')(server);
 
@@ -57,7 +53,6 @@ schedule.scheduleJob('0 25 2 * * *', (firedate) => {
       if (err) {
         throw err;
       } else {
-        console.log(results);
         console.log('batter scraping completed');
       }
     },
@@ -84,7 +79,6 @@ schedule.scheduleJob('0 27 2 * * *', (firedate) => {
       if (err) {
         throw err;
       } else {
-        console.log(results);
         console.log('pitcher scraping completed');
       }
     },
@@ -113,7 +107,6 @@ schedule.scheduleJob('30 30 7 * * *', (firedate) => {
 let rooms = {};
 const mock = io.of('mock-draft');
 mock.on('connection', (socket) => {
-  let playerList;
   let rand;
   console.log(`${socket.id} connected`);
   getPlayerData('player', (result1, result2) => {
@@ -268,7 +261,6 @@ mock.on('connection', (socket) => {
         rooms[socket.mock].temp.splice(0, 1);
       }
     }
-    //console.log(rooms);
   });
 });
 // global variable for all the leagues in namespace 'real-draft'
@@ -470,7 +462,7 @@ app.use('/user/:id', function (req, res, next) {
     });
   } else {
     // redirect to login page
-    res.redirect('/');
+    res.redirect('/login');
   }
 });
 app.get('/getAllLeague', (req, res) => {

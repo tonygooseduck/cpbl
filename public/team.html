@@ -72,59 +72,6 @@
 		xhttp.send();
 	</script>
 	<script>
-		document.querySelector("#changeLeague").addEventListener("click", function () {
-			let html = "";
-			xhttp = new XMLHttpRequest();
-			xhttp.onreadystatechange = function () {
-				if (this.readyState == 4 && this.status == 200) {
-					document.querySelector("#modify").style.display = "block";
-					let data = JSON.parse(this.responseText);
-					html += "<table class='table'><thead><tr><th scope='col'>Name</th><th>Status</th></tr></thead><tbody>";
-					for (let i = 0; i < data.length; i++) {
-						html += "<tr>";
-						//html += "<th scope='row'>" + data[i].name + "</th>";
-						html += "<td>" + data[i].player_name + "</td>";
-						html += "<td>" + data[i].player_status + "</td>";
-						html += "</tr>";
-					}
-					html += "</tbody></table>";
-					document.querySelector("#players").innerHTML = html;
-				}
-			};
-			xhttp.open("POST", "/user/draft");
-			xhttp.setRequestHeader("Content-Type", "application/json");
-			xhttp.send(JSON.stringify({ league: document.querySelector("#league").value }));
-			// schedule
-			let html2 = "";
-			let xhttp2 = new XMLHttpRequest();
-			xhttp2.onreadystatechange = function () {
-				if (this.readyState == 4 && this.status == 200) {
-					let data = JSON.parse(this.responseText);
-					html2 += "<table class='table'><thead><tr><th scope='col'>Date</th><th>Opponent</th><th>Opponent Status</th><th>Result</th></tr></thead><tbody>";
-					for (let i = 0; i < data.length; i++) {
-						html2 += "<tr>";
-						//html += "<th scope='row'>" + data[i].name + "</th>";
-						html2 += `<td>${new Date(Date.now() + data[i].date).toLocaleString()}</td>`;
-						html2 += "<td>" + data[i].name + "</td>";
-						if (data[i].away_user_status) {
-							html2 += "<td>" + data[i].away_user_status + "</td>";
-							html2 += "<td>" + data[i].home_user_result + "</td>";
-						} else {
-							html2 += "<td>" + data[i].home_user_status + "</td>";
-							html2 += "<td>" + data[i].away_user_result + "</td>";
-						}
-						html2 += "</tr>";
-					}
-					html2 += "</tbody></table>";
-					document.querySelector("#schedule").innerHTML = html2;
-				}
-			};
-			xhttp2.open("POST", "/user/schedule");
-			xhttp2.setRequestHeader("Content-Type", "application/json");
-			xhttp2.send(JSON.stringify({ league: document.querySelector("#league").value }));
-		});
-	</script>
-	<script>
 		document.querySelector("#addButton").addEventListener("click", function () {
 			xhttp = new XMLHttpRequest();
 			xhttp.onreadystatechange = function () {
@@ -163,7 +110,7 @@
 			};
 			xhttp.open("POST", "/ready/lineup");
 			xhttp.setRequestHeader("Content-Type", "application/json");
-			xhttp.send(JSON.stringify({ league: document.querySelector("#league").value }));
+			xhttp.send(JSON.stringify({ league: temp }));
 		});
 	</script>
 	<script>

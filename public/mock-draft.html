@@ -59,6 +59,7 @@
         <section>
             <ul id="messages"></ul>
         </section>
+        <button id="restart" , type="submit">再試一次</button>
         <div id="players" class="row">
             <div id="batters" class="col"></div>
             <div id="pitchers" class="col"></div>
@@ -117,24 +118,16 @@
         });
         socket.on('end', function (data) {
             draftForm.style.display = 'none';
+            restart.style.display = 'block';
         });
         const roomForm = document.querySelector('#room-form');
         const draftForm = document.querySelector('#draft-form');
         const start = document.querySelector('#start');
-        // let room = document.querySelector('#room');
-        // roomForm.addEventListener('submit', function (event) {
-        //     event.preventDefault();
-        //     socket.emit('joinroom', room.value, function (data) {
-        //         if (data) {
-        //             alert('room already existed');
-        //         } else {
-        //             roomForm.style.display = 'none';
-        //         }
-        //     });
-        // });
+        const restart = document.querySelector('#restart');
         roomForm.style.display = 'none';
         draftForm.style.display = 'none';
         start.style.display = 'none';
+        restart.style.display = 'none';
         if (document.cookie) {
             let xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function () {
@@ -175,6 +168,9 @@
                     draftForm.style.display = 'block';
                 }
             });
+        });
+        restart.addEventListener('click', function (event) {
+            window.location.href = '/user/mock-draft';
         });
         document.querySelector("body").addEventListener("click", event => {
             if (event.target.parentElement.tagName === "TR" && event.target.parentElement.firstChild.innerHTML != "Name") {
