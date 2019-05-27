@@ -45,16 +45,16 @@
         </nav>
     </div>
     <div class="container">
-        <button id="start" , type="submit">Start draft</button>
+        <button id="start" , type="submit">開始模擬選秀</button>
         <form id="room-form">
             <label for="room">Room:</label>
             <input type="text" id="room" />
             <input type="submit" />
         </form>
         <form id="draft-form">
-            <label for="draft">Draft:</label>
-            <input type="text" id="draft" />
-            <input type="submit" />
+            <label for="draft"></label>
+            <input placeholder="點選球員列" type="text" id="draft" />
+            <input value="選擇" type="submit" />
         </form>
         <section>
             <ul id="messages"></ul>
@@ -145,7 +145,6 @@
                             if (data) {
 
                             } else {
-                                draftForm.style.display = 'block';
                                 start.style.display = 'block';
                             }
                         });
@@ -173,10 +172,17 @@
             socket.emit('start', 'nothing', function (data) {
                 if (data) {
                     start.style.display = 'none';
+                    draftForm.style.display = 'block';
                 }
             });
         });
-
+        document.querySelector("body").addEventListener("click", event => {
+            if (event.target.parentElement.tagName === "TR" && event.target.parentElement.firstChild.innerHTML != "Name") {
+                console.log(event.target.parentElement.firstChild.innerHTML);
+                document.querySelector("#draft").value = event.target.parentElement.firstChild.innerHTML;
+            }
+        });
+    </script>
     </script>
 </body>
 
