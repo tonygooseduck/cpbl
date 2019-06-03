@@ -1,5 +1,3 @@
-// const $ = require('cheerio');
-// const rp = require('request-promise-native');
 // const fs = require('fs');
 const async = require('async');
 const crypto = require('crypto');
@@ -11,6 +9,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
 const app = express();
+const user = require('./user');
 
 app.use(cookieParser());
 app.use(
@@ -442,160 +441,14 @@ real.on('connection', (socket) => {
 });
 
 // routes
-
-app.use('/user/:id', function (req, res, next) {
-  let now = Date.now();
-  if (req.cookies.access_token) {
-    db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results, fields) {
-      if (error) {
-        throw error;
-      }
-      if (results.length === 0) {
-        res.send({ error: 'Invalid access token, please log in' });
-        return;
-      }
-      if (now > results[0].access_expired) {
-        res.send({ error: 'Access token has expired, please log in again' });
-        return;
-      }
-      next();
-    });
-  } else {
-    // redirect to login page
-    res.redirect('/login');
-  }
-});
-app.get('/getAllLeague', (req, res) => {
-  db.query('select * from cpbl_league', (error, results) => {
-    if (error) {
-      throw error;
-    }
-    res.send(results);
-  });
-});
+app.use('/user', user);
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/main.html'));
 });
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/user.html'));
 });
-app.get('/user/draft', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/draft.html'));
-});
 
-app.get('/getplayerdata', (req, res) => {
-  getPlayerData('nothing', (result) => {
-    res.send(result);
-  });
-});
-app.get('/user/team', (req, res) => {
-  if (req.cookies.access_token) {
-    db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], (error, results) => {
-      if (error) {
-        throw error;
-      }
-      if (results.length === 0) {
-        res.send({ error: 'Invalid access token, please log in' });
-        return;
-      }
-      let id = results[0].id;
-      db.query(`select name,league_id from cpbl_draft join cpbl_league on cpbl_draft.league_id = cpbl_league.id where user_id = '${id}' group by league_id`, function (error, results) {
-        if (error) {
-          throw error;
-        }
-        res.send(results);
-      });
-    });
-  }
-});
-app.post('/user/draft', (req, res) => {
-  let data = req.body;
-  if (req.cookies.access_token) {
-    db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results, fields) {
-      if (error) {
-        throw error;
-      }
-      if (results.length === 0) {
-        res.send({ error: 'Invalid access token, please log in' });
-        return;
-      }
-      let id = results[0].id;
-      db.query(`select * from cpbl_draft where user_id = '${id}' and league_id = '${data.league}'`, function (error, results, fields) {
-        if (error) {
-          throw error;
-        }
-        res.send(results);
-      });
-    });
-  }
-});
-app.post('/user/schedule', (req, res) => {
-  let data = req.body;
-  if (req.cookies.access_token) {
-    db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results, fields) {
-      if (error) {
-        throw error;
-      }
-      if (results.length === 0) {
-        res.send({ error: 'Invalid access token, please log in' });
-        return;
-      }
-      let id = results[0].id;
-      let results1;
-      let date = Date.now();
-      db.query(`select date, result, name, away_user_status, home_user_result from cpbl_game join cpbl_user on away_user_id = cpbl_user.id where home_user_id = '${id}' and league_id = '${data.league}'`, function (error, results, fields) {
-        if (error) {
-          throw error;
-        }
-        for (let i = 0; i < results.length; i++) {
-          results[i].date = results[i].date - date;
-        }
-        results1 = results;
-        db.query(`select date, result, name, home_user_status, away_user_result from cpbl_game join cpbl_user on home_user_id = cpbl_user.id where away_user_id = '${id}' and league_id = '${data.league}'`, function (error, results, fields) {
-          if (error) {
-            throw error;
-          }
-          for (let i = 0; i < results.length; i++) {
-            results[i].date = results[i].date - date;
-          }
-          res.send(results1.concat(results));
-        });
-      });
-    });
-  }
-});
-app.get('/user/mock-draft', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/mock-draft.html'));
-});
-app.get('/user/league', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/team.html'));
-});
-
-app.get('/profile', function (req, res) {
-  let now = Date.now();
-  if (req.cookies.access_token) {
-    db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results, fields) {
-      if (error) {
-        throw error;
-      }
-      if (results.length === 0) {
-        res.send({ error: 'Invalid access token, please log in' });
-        return;
-      }
-      if (now > results[0].access_expired) {
-        res.send({ error: 'Access token has expired, please log in again' });
-        return;
-      }
-      let data = {
-        id: results[0].id,
-        name: results[0].name
-      };
-      res.send(data);
-    });
-  } else {
-    res.send('please log in first');
-  }
-});
 app.post('/add/lineup', (req, res) => {
   let data = req.body;
   if (req.cookies.access_token) {
@@ -797,18 +650,6 @@ app.post('/signin', (req, res) => {
           res.send({ error: 'Sign in error, user does not exist or incorrect password' });
         } else {
           res.cookie('access_token', user.access_token);
-          // res.send({
-          // 	data: {
-          // 		access_token: user.access_token,
-          // 		access_expired: Math.floor((user.access_expired - now) / 1000),
-          // 		user: {
-          // 			id: user.id,
-          // 			provider: user.provider,
-          // 			name: user.name,
-          // 			email: user.email
-          // 		}
-          // 	}
-          // });
           res.send({ success: 'log in succeeded' });
         }
       };
@@ -851,49 +692,6 @@ app.post('/signin', (req, res) => {
   });
 });
 
-app.get('/batter', (req, res) => {
-  async.parallel(
-    [
-      function (callback) {
-        scrape.batter('http://www.cpbl.com.tw/web/team_playergrade.php?&team=E02&gameno=01', callback);
-      },
-      function (callback) {
-        scrape.batter('http://www.cpbl.com.tw/web/team_playergrade.php?&team=L01&gameno=01', callback);
-      },
-      function (callback) {
-        scrape.batter('http://www.cpbl.com.tw/web/team_playergrade.php?&team=A02&gameno=01', callback);
-      },
-      function (callback) {
-        scrape.batter('http://www.cpbl.com.tw/web/team_playergrade.php?&team=B04&gameno=01', callback);
-      }
-    ],
-    function (err, results) {
-      res.send(results);
-    }
-  );
-});
-app.get('/pitcher', (req, res) => {
-  async.parallel(
-    [
-      function (callback) {
-        scrape.pitcher('http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=E02&year=2019&grade=2&syear=2019', callback);
-      },
-      function (callback) {
-        scrape.pitcher('http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=L01&year=2019&grade=2&syear=2019', callback);
-      },
-      function (callback) {
-        scrape.pitcher('http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=A02&year=2019&grade=2&syear=2019', callback);
-      },
-      function (callback) {
-        scrape.pitcher('http://www.cpbl.com.tw/web/team_playergrade.php?&gameno=01&team=B04&year=2019&grade=2&syear=2019', callback);
-      }
-    ],
-    function (err, results) {
-      res.send(results);
-    }
-  );
-});
-
 function getPlayerData(player, callback) {
   let batterList = [];
   let pitcherList = [];
@@ -901,7 +699,7 @@ function getPlayerData(player, callback) {
     if (err) throw err;
     else {
       let batter;
-      for (let i = 0; i < result.length; i++) {
+      for (let i = 0; i < result.length; i += 1) {
         batter = {};
         batter.name = result[i].name;
         batter.team = result[i].team;
@@ -916,7 +714,7 @@ function getPlayerData(player, callback) {
         if (err) throw err;
         else {
           let pitcher;
-          for (let i = 0; i < result.length; i++) {
+          for (let i = 0; i < result.length; i += 1) {
             pitcher = {};
             pitcher.name = result[i].name;
             pitcher.team = result[i].team;
@@ -938,13 +736,13 @@ function getPlayerList(player, callback) {
   db.query('select * from batter', (err, result) => {
     if (err) throw err;
     else {
-      for (let i = 0; i < result.length; i++) {
+      for (let i = 0; i < result.length; i += 1) {
         playerList.push(result[i].name);
       }
       db.query('select * from pitcher', (err, result) => {
         if (err) throw err;
         else {
-          for (let i = 0; i < result.length; i++) {
+          for (let i = 0; i < result.length; i += 1) {
             playerList.push(result[i].name);
           }
         }

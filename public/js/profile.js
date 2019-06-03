@@ -8,6 +8,6 @@ if (document.cookie) {
             }
         }
     };
-    xhttp.open("GET", "/profile");
+    xhttp.open("GET", "/user/profile");
     xhttp.send();
 }
