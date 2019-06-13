@@ -9,7 +9,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
 const app = express();
-const user = require('./user');
+const user = require('./routes/user.js');
 
 app.use(cookieParser());
 app.use(
@@ -97,11 +97,6 @@ schedule.scheduleJob('30 30 7 * * *', (firedate) => {
       play.autoPlay(results[i].id, results[i].league_id, results[i].home_user_id, results[i].away_user_id);
     }
   });
-  // db.query(`insert into cpbl_schedule (date) values (${Date.now() + 15 * 60 * 1000})`, function(error, results, fields) {
-  // if (error) {
-  // throw error;
-  // }
-  // });
 });
 
 // socket.io application
@@ -119,94 +114,6 @@ app.get('/', (req, res) => {
 });
 app.get('/login', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/user.html'));
-});
-
-app.post('/add/lineup', (req, res) => {
-  let data = req.body;
-  if (req.cookies.access_token) {
-    db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results, fields) {
-      if (error) {
-        throw error;
-      }
-      if (results.length === 0) {
-        res.send({ error: 'Invalid access token, please log in' });
-        return;
-      }
-      let id = results[0].id;
-      let query = 'update cpbl_draft set player_status = ? where user_id = ? and player_name = ? and league_id = ?';
-      db.query(query, ['Start', id, data.name, data.league], function (error, results, fields) {
-        if (error) {
-          throw error;
-        }
-        if (results.affectedRows === 1) {
-          res.send({ result: 'Success' });
-        } else {
-          res.send({ result: 'update fail' });
-        }
-      });
-    });
-  }
-});
-app.post('/remove/lineup', (req, res) => {
-  let data = req.body;
-  if (req.cookies.access_token) {
-    db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results, fields) {
-      if (error) {
-        throw error;
-      }
-      if (results.length === 0) {
-        res.send({ error: 'Invalid access token, please log in' });
-        return;
-      }
-      let id = results[0].id;
-      let query = 'update cpbl_draft set player_status = ? where user_id = ? and player_name = ? and player_status = ? and league_id = ?';
-      db.query(query, ['Bench', id, data.name, 'Start', data.league], function (error, results, fields) {
-        if (error) {
-          throw error;
-        }
-        if (results.affectedRows === 1) {
-          res.send({ result: 'Success' });
-        } else {
-          res.send({ result: 'update fail' });
-        }
-      });
-    });
-  }
-});
-app.post('/ready/lineup', (req, res) => {
-  let data = req.body;
-  if (req.cookies.access_token) {
-    db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results) {
-      if (error) {
-        throw error;
-      }
-      if (results.length === 0) {
-        res.send({ error: 'Invalid access token, please log in' });
-        return;
-      }
-      let id = results[0].id;
-      db.query('select * from cpbl_draft where user_id = ? and league_id = ? and player_status = ?', [id, data.league, 'Start'], function (error, results, fields) {
-        if (error) {
-          throw error;
-        }
-        if (results.length === 3) {
-          db.query('update cpbl_game set home_user_status = ? where home_user_id = ? and league_id = ?', ['Ready', id, data.league], function (error, results, fields) {
-            if (error) {
-              throw error;
-            }
-            db.query('update cpbl_game set away_user_status = ? where away_user_id = ? and league_id = ?', ['Ready', id, data.league], function (error, results, fields) {
-              if (error) {
-                throw error;
-              }
-              res.send({ result: 'Success' });
-            });
-          });
-        } else {
-          res.send({ result: `${results.length} players in lineup, please modify to 3 then try again` });
-        }
-      });
-    });
-  }
 });
 app.post('/signup', (req, res) => {
   let data = req.body;
@@ -235,19 +142,6 @@ app.post('/signup', (req, res) => {
           });
         }
         res.cookie('access_token', user.access_token);
-        // res.send({
-        // 	data: {
-        // 		access_token: user.access_token,
-        // 		// 30 days of expiration time
-        // 		access_expired: Math.floor((user.access_expired - now) / 1000),
-        // 		user: {
-        // 			id: user.id,
-        // 			provider: user.provider,
-        // 			name: user.name,
-        // 			email: user.email
-        // 		}
-        // 	}
-        // });
         res.redirect('/');
       };
       let now = Date.now();

@@ -152,7 +152,7 @@
             event.preventDefault();
             socket.emit('draft', pick.value, function (data) {
                 if (data) {
-                    alert(data);
+                    alert('成功');
                 }
                 else {
                     alert('unknown error');

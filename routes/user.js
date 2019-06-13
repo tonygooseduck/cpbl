@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('./db.js');
+const db = require('../db.js');
 const path = require('path');
 
 router.use(function (req, res, next) {
@@ -27,13 +27,13 @@ router.use(function (req, res, next) {
 });
 
 router.get('/draft', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/draft.html'));
+    res.sendFile(path.join(__dirname, '../public/draft.html'));
 });
 router.get('/mock-draft', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/mock-draft.html'));
+    res.sendFile(path.join(__dirname, '../public/mock-draft.html'));
 });
 router.get('/league', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/team.html'));
+    res.sendFile(path.join(__dirname, '../public/team.html'));
 });
 
 router.get('/team', (req, res) => {
@@ -135,6 +135,94 @@ router.post('/schedule', (req, res) => {
                     }
                     res.send(results1.concat(results));
                 });
+            });
+        });
+    }
+});
+
+router.post('/add/lineup', (req, res) => {
+    let data = req.body;
+    if (req.cookies.access_token) {
+        db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results, fields) {
+            if (error) {
+                throw error;
+            }
+            if (results.length === 0) {
+                res.send({ error: 'Invalid access token, please log in' });
+                return;
+            }
+            let id = results[0].id;
+            let query = 'update cpbl_draft set player_status = ? where user_id = ? and player_name = ? and league_id = ?';
+            db.query(query, ['Start', id, data.name, data.league], function (error, results, fields) {
+                if (error) {
+                    throw error;
+                }
+                if (results.affectedRows === 1) {
+                    res.send({ result: 'Success' });
+                } else {
+                    res.send({ result: 'update fail' });
+                }
+            });
+        });
+    }
+});
+router.post('/remove/lineup', (req, res) => {
+    let data = req.body;
+    if (req.cookies.access_token) {
+        db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results, fields) {
+            if (error) {
+                throw error;
+            }
+            if (results.length === 0) {
+                res.send({ error: 'Invalid access token, please log in' });
+                return;
+            }
+            let id = results[0].id;
+            let query = 'update cpbl_draft set player_status = ? where user_id = ? and player_name = ? and player_status = ? and league_id = ?';
+            db.query(query, ['Bench', id, data.name, 'Start', data.league], function (error, results, fields) {
+                if (error) {
+                    throw error;
+                }
+                if (results.affectedRows === 1) {
+                    res.send({ result: 'Success' });
+                } else {
+                    res.send({ result: 'update fail' });
+                }
+            });
+        });
+    }
+});
+router.post('/ready/lineup', (req, res) => {
+    let data = req.body;
+    if (req.cookies.access_token) {
+        db.query('select * from cpbl_user where access_token = ?', [req.cookies.access_token], function (error, results) {
+            if (error) {
+                throw error;
+            }
+            if (results.length === 0) {
+                res.send({ error: 'Invalid access token, please log in' });
+                return;
+            }
+            let id = results[0].id;
+            db.query('select * from cpbl_draft where user_id = ? and league_id = ? and player_status = ?', [id, data.league, 'Start'], function (error, results, fields) {
+                if (error) {
+                    throw error;
+                }
+                if (results.length === 3) {
+                    db.query('update cpbl_game set home_user_status = ? where home_user_id = ? and league_id = ?', ['Ready', id, data.league], function (error, results, fields) {
+                        if (error) {
+                            throw error;
+                        }
+                        db.query('update cpbl_game set away_user_status = ? where away_user_id = ? and league_id = ?', ['Ready', id, data.league], function (error, results, fields) {
+                            if (error) {
+                                throw error;
+                            }
+                            res.send({ result: 'Success' });
+                        });
+                    });
+                } else {
+                    res.send({ result: `${results.length} players in lineup, please modify to 3 then try again` });
+                }
             });
         });
     }

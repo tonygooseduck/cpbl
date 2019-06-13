@@ -80,7 +80,7 @@
 					document.querySelector("#result").innerHTML = "<span class='badge badge-info'>" + data.result + "</span>";
 				}
 			};
-			xhttp.open("POST", "/add/lineup");
+			xhttp.open("POST", "/user/add/lineup");
 			xhttp.setRequestHeader("Content-Type", "application/json");
 			xhttp.send(JSON.stringify({ name: document.querySelector("#add").value, league: temp }));
 		});
@@ -94,7 +94,7 @@
 					document.querySelector("#result").innerHTML = "<span class='badge badge-info'>" + data.result + "</span>";
 				}
 			};
-			xhttp.open("POST", "/remove/lineup");
+			xhttp.open("POST", "/user/remove/lineup");
 			xhttp.setRequestHeader("Content-Type", "application/json");
 			xhttp.send(JSON.stringify({ name: document.querySelector("#remove").value, league: temp }));
 		});
@@ -108,7 +108,7 @@
 					document.querySelector("#result").innerHTML = "<span class='badge badge-info'>" + data.result + "</span>";
 				}
 			};
-			xhttp.open("POST", "/ready/lineup");
+			xhttp.open("POST", "/user/ready/lineup");
 			xhttp.setRequestHeader("Content-Type", "application/json");
 			xhttp.send(JSON.stringify({ league: temp }));
 		});
