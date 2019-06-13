@@ -114,7 +114,7 @@
 				user_name = data.name;
 			}
 		};
-		xhttp.open("GET", "/profile", true);
+		xhttp.open("GET", "/user/profile", true);
 		xhttp.send();
 
 		let socket = io("/real-draft", {
